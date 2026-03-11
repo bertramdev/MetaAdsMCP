@@ -1,0 +1,140 @@
+# PROJECT.md - Meta Ads MCP Server
+
+## Vision
+
+A locally-hosted MCP server wrapping the Meta (Facebook) Ads API for agency/multi-client ad management. Designed for use via Claude Desktop, Claude Code, and other MCP clients. Enables natural-language interaction with Meta Ads — reading performance data, managing campaigns, and controlling ad delivery across multiple client ad accounts.
+
+## Goals by Version
+
+### v1 — Read Tools
+- Account info and listing across multiple ad accounts
+- Full campaign structure browsing (campaigns, ad sets, ads)
+- Insights with flexible date ranges, breakdowns, and levels
+- Creative and audience listing
+- Solid test coverage with mocked fixtures
+
+### v2 — Write Tools
+- Campaign, ad set, and ad CRUD (create, update, status management)
+- Budget updates with confirmation
+- All write ops default to PAUSED with dry_run support
+- Archive instead of delete
+
+### v3 — Advanced
+- Audience creation (custom and lookalike)
+- Creative upload
+- Bulk operations
+- Automated reporting and trend analysis
+
+## Architecture
+
+```
+src/meta_ads_mcp/
+├── __init__.py
+├── server.py        # FastMCP server, lifespan, stdio transport
+├── client.py        # Wraps facebook-business SDK, async-compatible
+├── models.py        # Pydantic v2 models for all entities
+├── config.py        # python-decouple config loading
+├── formatting.py    # Markdown formatters for LLM output
+└── tools/
+    ├── __init__.py
+    ├── accounts.py  # Account info and listing
+    ├── campaigns.py # Campaign CRUD
+    ├── adsets.py    # Ad set CRUD
+    ├── ads.py       # Ad CRUD
+    ├── insights.py  # Performance reporting and analytics
+    ├── creatives.py # Creative management
+    └── audiences.py # Audience management
+```
+
+## Tech Stack
+
+| Component | Choice |
+|---|---|
+| Language | Python 3.12+ |
+| MCP framework | mcp SDK v1 (FastMCP) |
+| Meta API SDK | facebook-business |
+| Data validation | Pydantic v2 |
+| Configuration | python-decouple |
+| Package manager | Poetry |
+| Testing | pytest, pytest-asyncio, pytest-mock |
+| Code quality | Black, Ruff, mypy |
+
+## Key Design Decisions
+
+### facebook-business SDK over raw httpx
+The official SDK handles authentication, pagination, rate limiting, and field resolution. It also provides typed access to API objects, reducing boilerplate for constructing requests and parsing responses.
+
+### Async wrapping via `asyncio.to_thread()`
+The facebook-business SDK is synchronous. Rather than building a custom async HTTP layer, we wrap SDK calls with `asyncio.to_thread()` to maintain FastMCP's async interface without blocking the event loop.
+
+### Read-first phasing
+Read tools are lower risk and provide immediate value. They also exercise the full stack (config, client, models, formatting) before write operations add mutation complexity.
+
+### No delete tools
+Meta's API supports deletion, but it's irreversible. Archive (setting status to `ARCHIVED`) achieves the same practical result and can be undone. This protects against accidental data loss through LLM tool calls.
+
+### Multi-account via `account_id` parameter
+Agency use case requires managing multiple client ad accounts. Every tool accepts an optional `account_id` parameter, falling back to the configured default. This avoids server restarts when switching between clients.
+
+## Scope Boundaries
+
+### Out of scope for v1
+- Conversions API (CAPI)
+- Product Catalog management
+- Lead form management
+- Pixel/Events Manager
+- Instagram-specific APIs (beyond what's exposed through Ads API)
+- SSE transport (stdio only for local hosting)
+
+## Planned Tools (~23 tools across 7 categories)
+
+### Accounts (3)
+| Tool | Description |
+|---|---|
+| `get_ad_accounts` | List all accessible ad accounts for the authenticated user |
+| `get_account_info` | Get detailed info for a specific ad account |
+| `get_account_insights` | Get account-level performance metrics |
+
+### Campaigns (4)
+| Tool | Description |
+|---|---|
+| `list_campaigns` | List campaigns with filtering by status |
+| `get_campaign` | Get detailed campaign info including settings |
+| `create_campaign` | Create a new campaign (defaults to PAUSED) |
+| `update_campaign` | Update campaign name, budget, status, or schedule |
+
+### Ad Sets (4)
+| Tool | Description |
+|---|---|
+| `list_ad_sets` | List ad sets with optional campaign filter |
+| `get_ad_set` | Get detailed ad set info including targeting |
+| `create_ad_set` | Create a new ad set with targeting and budget |
+| `update_ad_set` | Update ad set targeting, budget, status, or schedule |
+
+### Ads (4)
+| Tool | Description |
+|---|---|
+| `list_ads` | List ads with optional ad set or campaign filter |
+| `get_ad` | Get detailed ad info including creative reference |
+| `create_ad` | Create a new ad with creative reference |
+| `update_ad_status` | Pause, activate, or archive an ad |
+
+### Insights (4)
+| Tool | Description |
+|---|---|
+| `get_insights` | Flexible insights query with date range, breakdowns, and level |
+| `get_campaign_insights` | Campaign performance with period comparison |
+| `compare_performance` | Compare entities side-by-side |
+| `get_breakdown_report` | Age, gender, placement, or device breakdowns |
+
+### Creatives (2)
+| Tool | Description |
+|---|---|
+| `list_creatives` | List ad creatives for an account |
+| `get_creative` | Get creative details including thumbnail URL and body |
+
+### Audiences (2)
+| Tool | Description |
+|---|---|
+| `list_audiences` | List custom and lookalike audiences |
+| `get_audience` | Get audience details including size and status |

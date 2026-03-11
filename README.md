@@ -1,0 +1,233 @@
+# Meta Ads MCP Server
+
+A locally-hosted MCP server for managing Meta (Facebook) Ads across multiple client ad accounts via Claude Desktop, Claude Code, and other MCP clients.
+
+## Features
+
+- Browse and inspect ad account structure (campaigns, ad sets, ads)
+- Query performance insights with flexible date ranges and breakdowns
+- Create and manage campaigns, ad sets, and ads
+- Compare performance across entities side-by-side
+- View creatives and audiences
+- Multi-account support for agency workflows
+- All output formatted as markdown for LLM readability
+
+## Prerequisites
+
+- Python 3.12+
+- [Poetry](https://python-poetry.org/docs/#installation)
+- Meta developer account with Marketing API access (see setup guide below)
+
+## Installation
+
+```bash
+git clone https://github.com/tlong/MetaAdsMCP.git
+cd MetaAdsMCP
+poetry install
+```
+
+## Getting a Meta Access Token
+
+If you don't have Meta developer credentials yet, follow these steps:
+
+### 1. Create a Meta App
+
+1. Go to [developers.facebook.com](https://developers.facebook.com/) and log in
+2. Click **My Apps** > **Create App**
+3. Select **Other** as the use case, then **Business** as the app type
+4. Name your app and click **Create App**
+
+### 2. Add Marketing API
+
+1. In your app dashboard, click **Add Product**
+2. Find **Marketing API** and click **Set Up**
+
+### 3. Generate a User Access Token (for development)
+
+1. Go to [Graph API Explorer](https://developers.facebook.com/tools/explorer/)
+2. Select your app from the dropdown
+3. Click **Generate Access Token**
+4. Grant the required permissions: `ads_read`, `ads_management`
+5. Copy the token — this is a short-lived token (expires in ~1 hour)
+
+### 4. Exchange for a Long-Lived Token (60 days)
+
+```bash
+curl -X GET "https://graph.facebook.com/v21.0/oauth/access_token?\
+grant_type=fb_exchange_token&\
+client_id=YOUR_APP_ID&\
+client_secret=YOUR_APP_SECRET&\
+fb_exchange_token=YOUR_SHORT_LIVED_TOKEN"
+```
+
+The response contains a `access_token` field with your long-lived token (valid for 60 days).
+
+### 5. (Recommended) Create a System User Token
+
+For a non-expiring token suitable for production use:
+
+1. Go to [Business Manager](https://business.facebook.com/) > **Business Settings**
+2. Navigate to **Users** > **System Users**
+3. Click **Add** to create a new system user
+4. Assign the system user to your ad accounts with appropriate permissions
+5. Click **Generate New Token**, select your app, and grant `ads_read` and `ads_management`
+6. This token does not expire
+
+### Required Permissions
+
+| Permission | Purpose |
+|---|---|
+| `ads_read` | Read campaigns, ad sets, ads, insights, audiences, creatives |
+| `ads_management` | Create and update campaigns, ad sets, ads |
+
+## Configuration
+
+Copy the example environment file and fill in your credentials:
+
+```bash
+cp .env.example .env
+```
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `META_ACCESS_TOKEN` | Yes | — | Meta API access token |
+| `META_APP_ID` | Yes | — | Meta App ID from app dashboard |
+| `META_APP_SECRET` | Yes | — | Meta App Secret from app dashboard |
+| `META_DEFAULT_AD_ACCOUNT_ID` | No | — | Default ad account ID (with `act_` prefix) |
+| `META_API_VERSION` | No | `v21.0` | Meta Graph API version |
+
+## Usage
+
+### Claude Desktop
+
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "meta-ads": {
+      "command": "poetry",
+      "args": ["run", "python", "-m", "meta_ads_mcp"],
+      "cwd": "/path/to/MetaAdsMCP",
+      "env": {
+        "META_ACCESS_TOKEN": "your_token_here",
+        "META_APP_ID": "your_app_id",
+        "META_APP_SECRET": "your_app_secret",
+        "META_DEFAULT_AD_ACCOUNT_ID": "act_your_account_id"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+Add to your project's `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "meta-ads": {
+      "command": "poetry",
+      "args": ["run", "python", "-m", "meta_ads_mcp"],
+      "cwd": "/path/to/MetaAdsMCP"
+    }
+  }
+}
+```
+
+## Available Tools
+
+### Accounts
+| Tool | Description |
+|---|---|
+| `get_ad_accounts` | List all accessible ad accounts |
+| `get_account_info` | Get detailed info for a specific ad account |
+| `get_account_insights` | Get account-level performance metrics |
+
+### Campaigns
+| Tool | Description |
+|---|---|
+| `list_campaigns` | List campaigns with status filtering |
+| `get_campaign` | Get detailed campaign info |
+| `create_campaign` | Create a new campaign (defaults to PAUSED) |
+| `update_campaign` | Update campaign name, budget, status, or schedule |
+
+### Ad Sets
+| Tool | Description |
+|---|---|
+| `list_ad_sets` | List ad sets with optional campaign filter |
+| `get_ad_set` | Get detailed ad set info including targeting |
+| `create_ad_set` | Create ad set with targeting, budget, schedule |
+| `update_ad_set` | Update ad set settings |
+
+### Ads
+| Tool | Description |
+|---|---|
+| `list_ads` | List ads with optional filters |
+| `get_ad` | Get detailed ad info with creative reference |
+| `create_ad` | Create a new ad with creative reference |
+| `update_ad_status` | Pause, activate, or archive an ad |
+
+### Insights
+| Tool | Description |
+|---|---|
+| `get_insights` | Flexible insights query with date range, breakdowns, level |
+| `get_campaign_insights` | Campaign performance with period comparison |
+| `compare_performance` | Compare entities side-by-side |
+| `get_breakdown_report` | Age, gender, placement, or device breakdowns |
+
+### Creatives
+| Tool | Description |
+|---|---|
+| `list_creatives` | List ad creatives for an account |
+| `get_creative` | Get creative details including thumbnail and body |
+
+### Audiences
+| Tool | Description |
+|---|---|
+| `list_audiences` | List custom and lookalike audiences |
+| `get_audience` | Get audience details including size and status |
+
+## Example Queries
+
+Once configured, you can ask Claude things like:
+
+- "Show me all active campaigns for account act_123456789"
+- "What's the ROAS for Campaign X over the last 30 days?"
+- "Compare performance between Campaign A and Campaign B this month"
+- "Break down ad set performance by age and gender"
+- "Create a new traffic campaign called 'Spring Sale 2026' with a $50/day budget"
+- "Pause all ads in the 'Test Campaign' ad set"
+- "List all custom audiences with more than 10,000 people"
+
+## Development
+
+```bash
+# Run tests
+poetry run pytest
+
+# Run tests with coverage
+poetry run pytest --cov=meta_ads_mcp
+
+# Lint
+poetry run ruff check .
+
+# Format
+poetry run black .
+
+# Type check
+poetry run mypy src/
+```
+
+## Testing with MCP Inspector
+
+```bash
+npx @modelcontextprotocol/inspector poetry run python -m meta_ads_mcp
+```
+
+## License
+
+MIT
