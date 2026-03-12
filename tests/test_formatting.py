@@ -1,0 +1,325 @@
+"""Tests for markdown formatters."""
+
+from meta_ads_mcp.formatting import (
+    format_account,
+    format_account_list,
+    format_ad,
+    format_ad_list,
+    format_ad_set,
+    format_ad_set_list,
+    format_audience,
+    format_audience_list,
+    format_campaign,
+    format_campaign_list,
+    format_creative,
+    format_creative_list,
+    format_error,
+    format_insights_table,
+)
+from meta_ads_mcp.models import (
+    AdAccountModel,
+    AdCreativeModel,
+    AdModel,
+    AdSetModel,
+    CampaignModel,
+    CustomAudienceModel,
+    InsightRow,
+)
+
+
+class TestAccountFormatters:
+    """Tests for account formatters."""
+
+    def test_format_account(self) -> None:
+        """Single account formatted as detail view."""
+        account = AdAccountModel(
+            id="act_123",
+            name="Test Account",
+            account_status=1,
+            currency="USD",
+            timezone_name="America/New_York",
+            amount_spent="150000",
+            balance="5000",
+            spend_cap="1000000",
+        )
+        result = format_account(account)
+        assert "## Ad Account: Test Account" in result
+        assert "act_123" in result
+        assert "Active" in result
+        assert "$1,500.00" in result
+
+    def test_format_account_list(self) -> None:
+        """Account list formatted as table."""
+        accounts = [
+            AdAccountModel(
+                id="act_1",
+                name="Account 1",
+                account_status=1,
+                currency="USD",
+                amount_spent="1000",
+            ),
+            AdAccountModel(
+                id="act_2",
+                name="Account 2",
+                account_status=2,
+                currency="EUR",
+                amount_spent="2000",
+            ),
+        ]
+        result = format_account_list(accounts)
+        assert "## Ad Accounts" in result
+        assert "act_1" in result
+        assert "act_2" in result
+        assert "Account 1" in result
+
+    def test_format_account_list_empty(self) -> None:
+        """Empty list returns appropriate message."""
+        result = format_account_list([])
+        assert "No ad accounts found" in result
+
+
+class TestCampaignFormatters:
+    """Tests for campaign formatters."""
+
+    def test_format_campaign(self) -> None:
+        """Single campaign formatted as detail view."""
+        campaign = CampaignModel(
+            id="camp_123",
+            name="Spring Sale",
+            status="ACTIVE",
+            effective_status="ACTIVE",
+            objective="OUTCOME_TRAFFIC",
+            daily_budget="5000",
+        )
+        result = format_campaign(campaign)
+        assert "## Campaign: Spring Sale" in result
+        assert "OUTCOME_TRAFFIC" in result
+        assert "$50.00" in result
+
+    def test_format_campaign_list(self) -> None:
+        """Campaign list formatted as table."""
+        campaigns = [
+            CampaignModel(
+                id="c1", name="Campaign 1", status="ACTIVE", effective_status="ACTIVE"
+            ),
+            CampaignModel(
+                id="c2", name="Campaign 2", status="PAUSED", effective_status="PAUSED"
+            ),
+        ]
+        result = format_campaign_list(campaigns)
+        assert "## Campaigns" in result
+        assert "Campaign 1" in result
+        assert "Campaign 2" in result
+
+    def test_format_campaign_list_empty(self) -> None:
+        """Empty list returns message."""
+        assert "No campaigns found" in format_campaign_list([])
+
+
+class TestAdSetFormatters:
+    """Tests for ad set formatters."""
+
+    def test_format_ad_set(self) -> None:
+        """Single ad set formatted as detail view."""
+        ad_set = AdSetModel(
+            id="adset_123",
+            name="Test Ad Set",
+            status="ACTIVE",
+            campaign_id="camp_456",
+            daily_budget="2500",
+            billing_event="IMPRESSIONS",
+            optimization_goal="LINK_CLICKS",
+            targeting={"geo_locations": {"countries": ["US"]}},
+        )
+        result = format_ad_set(ad_set)
+        assert "## Ad Set: Test Ad Set" in result
+        assert "camp_456" in result
+        assert "$25.00" in result
+        assert "LINK_CLICKS" in result
+
+    def test_format_ad_set_list(self) -> None:
+        """Ad set list formatted as table."""
+        ad_sets = [AdSetModel(id="as1", name="Ad Set 1", effective_status="ACTIVE")]
+        result = format_ad_set_list(ad_sets)
+        assert "## Ad Sets" in result
+        assert "Ad Set 1" in result
+
+    def test_format_ad_set_list_empty(self) -> None:
+        """Empty list returns message."""
+        assert "No ad sets found" in format_ad_set_list([])
+
+
+class TestAdFormatters:
+    """Tests for ad formatters."""
+
+    def test_format_ad(self) -> None:
+        """Single ad formatted as detail view."""
+        ad = AdModel(
+            id="ad_123",
+            name="Test Ad",
+            status="ACTIVE",
+            effective_status="ACTIVE",
+            adset_id="adset_456",
+            campaign_id="camp_789",
+            creative={"id": "cr_111"},
+        )
+        result = format_ad(ad)
+        assert "## Ad: Test Ad" in result
+        assert "cr_111" in result
+        assert "adset_456" in result
+
+    def test_format_ad_list(self) -> None:
+        """Ad list formatted as table."""
+        ads = [
+            AdModel(id="ad_1", name="Ad 1", status="ACTIVE", effective_status="ACTIVE")
+        ]
+        result = format_ad_list(ads)
+        assert "## Ads" in result
+
+    def test_format_ad_list_empty(self) -> None:
+        """Empty list returns message."""
+        assert "No ads found" in format_ad_list([])
+
+
+class TestCreativeFormatters:
+    """Tests for creative formatters."""
+
+    def test_format_creative(self) -> None:
+        """Single creative formatted as detail view."""
+        creative = AdCreativeModel(
+            id="cr_123",
+            name="My Creative",
+            title="Buy Now",
+            body="Great deals!",
+            call_to_action_type="LEARN_MORE",
+            link_url="https://example.com",
+        )
+        result = format_creative(creative)
+        assert "## Creative: My Creative" in result
+        assert "Buy Now" in result
+        assert "LEARN_MORE" in result
+
+    def test_format_creative_list(self) -> None:
+        """Creative list formatted as table."""
+        creatives = [AdCreativeModel(id="cr_1", name="Creative 1")]
+        result = format_creative_list(creatives)
+        assert "## Ad Creatives" in result
+
+    def test_format_creative_list_empty(self) -> None:
+        """Empty list returns message."""
+        assert "No creatives found" in format_creative_list([])
+
+
+class TestInsightsFormatter:
+    """Tests for insights table formatter."""
+
+    def test_format_insights_table(self) -> None:
+        """Insights formatted as dynamic table."""
+        rows = [
+            InsightRow(
+                campaign_name="Campaign 1",
+                impressions="10000",
+                clicks="250",
+                spend="75.50",
+                ctr="2.5",
+                cpc="0.302",
+                cpm="7.55",
+                reach="8000",
+                date_start="2026-03-01",
+                date_stop="2026-03-07",
+            ),
+        ]
+        result = format_insights_table(rows)
+        assert "## Performance Insights" in result
+        assert "Campaign 1" in result
+        assert "10,000" in result
+        assert "$75.50" in result
+
+    def test_format_insights_with_breakdowns(self) -> None:
+        """Insights with breakdown columns detected."""
+        rows = [
+            InsightRow(
+                age="25-34",
+                gender="male",
+                impressions="5000",
+                clicks="100",
+                spend="30.00",
+                ctr="2.0",
+                cpc="0.30",
+                cpm="6.00",
+                reach="4000",
+                date_start="2026-03-01",
+                date_stop="2026-03-07",
+            ),
+        ]
+        result = format_insights_table(rows, title="Age/Gender Report")
+        assert "## Age/Gender Report" in result
+        assert "25-34" in result
+        assert "male" in result
+        assert "Age" in result
+        assert "Gender" in result
+
+    def test_format_insights_empty(self) -> None:
+        """Empty list returns message."""
+        assert "No insights data found" in format_insights_table([])
+
+    def test_custom_title(self) -> None:
+        """Custom title appears in output."""
+        rows = [
+            InsightRow(
+                impressions="100",
+                clicks="10",
+                spend="5.00",
+                ctr="10.0",
+                cpc="0.50",
+                cpm="50.0",
+                reach="90",
+                date_start="2026-03-01",
+                date_stop="2026-03-01",
+            ),
+        ]
+        result = format_insights_table(rows, title="My Custom Report")
+        assert "## My Custom Report" in result
+
+
+class TestAudienceFormatters:
+    """Tests for audience formatters."""
+
+    def test_format_audience(self) -> None:
+        """Single audience formatted as detail view."""
+        audience = CustomAudienceModel(
+            id="aud_123",
+            name="Website Visitors",
+            subtype="CUSTOM",
+            approximate_count_lower_bound=50000,
+            approximate_count_upper_bound=75000,
+            delivery_status={"status": "ready"},
+            operation_status={"status": "normal"},
+            description="All website visitors last 30 days",
+        )
+        result = format_audience(audience)
+        assert "## Audience: Website Visitors" in result
+        assert "50,000 - 75,000" in result
+        assert "ready" in result
+
+    def test_format_audience_list(self) -> None:
+        """Audience list formatted as table."""
+        audiences = [
+            CustomAudienceModel(id="aud_1", name="Audience 1", subtype="CUSTOM"),
+        ]
+        result = format_audience_list(audiences)
+        assert "## Custom Audiences" in result
+
+    def test_format_audience_list_empty(self) -> None:
+        """Empty list returns message."""
+        assert "No audiences found" in format_audience_list([])
+
+
+class TestErrorFormatter:
+    """Tests for error formatter."""
+
+    def test_format_error(self) -> None:
+        """Error formatted as markdown."""
+        result = format_error("Something went wrong")
+        assert "## Error" in result
+        assert "Something went wrong" in result
