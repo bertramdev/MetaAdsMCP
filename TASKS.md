@@ -13,13 +13,13 @@ GitHub Project: [Meta Ads MCP](https://github.com/users/tomleelong/projects/2)
 
 ## Phase 1: Foundation
 
-- [ ] #1 Project scaffold — pyproject.toml, directory structure, .gitignore, .env.example
-- [ ] #2 Poetry environment with all dependencies
-- [ ] #3 `config.py` — MetaAdsConfig, env var loading, multi-account support
-- [ ] #4 `client.py` — MetaAdsClient wrapping SDK, async-compatible via `to_thread`, error handling
-- [ ] #5 `models.py` — Pydantic v2 models (AdAccount, Campaign, AdSet, Ad, AdCreative, InsightRow, CustomAudience)
-- [ ] #6 `server.py` skeleton — FastMCP init, lifespan, stdio transport, main entry point
-- [ ] #7 `formatting.py` — base markdown formatters for all entity types
+- [x] #1 Project scaffold — pyproject.toml, directory structure, .gitignore, .env.example
+- [x] #2 Poetry environment with all dependencies
+- [x] #3 `config.py` — MetaAdsConfig, env var loading, multi-account support
+- [x] #4 `client.py` — MetaAdsClient wrapping SDK, async-compatible via `to_thread`, error handling
+- [x] #5 `models.py` — Pydantic v2 models (AdAccount, Campaign, AdSet, Ad, AdCreative, InsightRow, CustomAudience)
+- [x] #6 `server.py` skeleton — FastMCP init, lifespan, stdio transport, main entry point
+- [x] #7 `formatting.py` — base markdown formatters for all entity types
 
 ## Phase 2: Read Tools
 
