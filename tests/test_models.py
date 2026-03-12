@@ -59,6 +59,26 @@ class TestAdAccountModel:
         model = AdAccountModel(amount_spent="150000")
         assert model.amount_spent_formatted == "$1,500.00"
 
+    def test_balance_formatted(self) -> None:
+        """balance_formatted converts cents to dollars."""
+        model = AdAccountModel(balance="5000")
+        assert model.balance_formatted == "$50.00"
+
+    def test_balance_formatted_invalid(self) -> None:
+        """balance_formatted falls back to raw value on invalid input."""
+        model = AdAccountModel(balance="invalid")
+        assert model.balance_formatted == "invalid"
+
+    def test_spend_cap_formatted(self) -> None:
+        """spend_cap_formatted converts cents to dollars."""
+        model = AdAccountModel(spend_cap="1000000")
+        assert model.spend_cap_formatted == "$10,000.00"
+
+    def test_spend_cap_formatted_invalid(self) -> None:
+        """spend_cap_formatted falls back to raw value on invalid input."""
+        model = AdAccountModel(spend_cap="n/a")
+        assert model.spend_cap_formatted == "n/a"
+
     def test_defaults(self) -> None:
         """Model has sensible defaults for all fields."""
         model = AdAccountModel()
@@ -92,6 +112,16 @@ class TestCampaignModel:
         assert model.daily_budget_formatted == "$50.00"
         assert model.lifetime_budget_formatted == "Not set"
 
+    def test_budget_remaining_formatted(self) -> None:
+        """budget_remaining_formatted converts cents to dollars."""
+        model = CampaignModel(budget_remaining="7500")
+        assert model.budget_remaining_formatted == "$75.00"
+
+    def test_budget_remaining_formatted_invalid(self) -> None:
+        """budget_remaining_formatted falls back to raw value on invalid input."""
+        model = CampaignModel(budget_remaining="unknown")
+        assert model.budget_remaining_formatted == "unknown"
+
     def test_extra_ignored(self) -> None:
         """Extra fields are ignored."""
         model = CampaignModel(id="123", extra_field="ignored")  # type: ignore[call-arg]
@@ -119,6 +149,16 @@ class TestAdSetModel:
         model = AdSetModel(**data)
         assert model.name == "Test Ad Set"
         assert model.campaign_id == "camp_456"
+
+    def test_budget_remaining_formatted(self) -> None:
+        """budget_remaining_formatted converts cents to dollars."""
+        model = AdSetModel(budget_remaining="3000")
+        assert model.budget_remaining_formatted == "$30.00"
+
+    def test_budget_remaining_formatted_invalid(self) -> None:
+        """budget_remaining_formatted falls back to raw value on invalid input."""
+        model = AdSetModel(budget_remaining="bad")
+        assert model.budget_remaining_formatted == "bad"
 
     def test_targeting_summary(self) -> None:
         """targeting_summary generates human-readable text."""

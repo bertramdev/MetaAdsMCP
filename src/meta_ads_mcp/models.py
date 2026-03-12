@@ -59,6 +59,24 @@ class AdAccountModel(BaseModel):
         except (ValueError, TypeError):
             return self.amount_spent
 
+    @property
+    def balance_formatted(self) -> str:
+        """Format balance from cents string to dollar display."""
+        try:
+            cents = int(self.balance)
+            return f"${cents / 100:,.2f}"
+        except (ValueError, TypeError):
+            return self.balance
+
+    @property
+    def spend_cap_formatted(self) -> str:
+        """Format spend_cap from cents string to dollar display."""
+        try:
+            cents = int(self.spend_cap)
+            return f"${cents / 100:,.2f}"
+        except (ValueError, TypeError):
+            return self.spend_cap
+
 
 class CampaignModel(BaseModel):
     """Model for a Meta Ads Campaign.
@@ -114,6 +132,15 @@ class CampaignModel(BaseModel):
             return f"${cents / 100:,.2f}"
         except (ValueError, TypeError):
             return self.lifetime_budget
+
+    @property
+    def budget_remaining_formatted(self) -> str:
+        """Format budget_remaining from cents string to dollar display."""
+        try:
+            cents = int(self.budget_remaining)
+            return f"${cents / 100:,.2f}"
+        except (ValueError, TypeError):
+            return self.budget_remaining
 
 
 class AdSetModel(BaseModel):
@@ -172,6 +199,15 @@ class AdSetModel(BaseModel):
             return f"${cents / 100:,.2f}"
         except (ValueError, TypeError):
             return self.lifetime_budget
+
+    @property
+    def budget_remaining_formatted(self) -> str:
+        """Format budget_remaining from cents string to dollar display."""
+        try:
+            cents = int(self.budget_remaining)
+            return f"${cents / 100:,.2f}"
+        except (ValueError, TypeError):
+            return self.budget_remaining
 
     @property
     def targeting_summary(self) -> str:

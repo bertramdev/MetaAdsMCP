@@ -30,8 +30,8 @@ def format_account(account: AdAccountModel) -> str:
 - **Currency**: {account.currency}
 - **Timezone**: {account.timezone_name}
 - **Amount Spent**: {account.amount_spent_formatted}
-- **Balance**: ${int(account.balance) / 100:,.2f}
-- **Spend Cap**: ${int(account.spend_cap) / 100:,.2f}"""
+- **Balance**: {account.balance_formatted}
+- **Spend Cap**: {account.spend_cap_formatted}"""
 
 
 def format_account_list(accounts: list[AdAccountModel]) -> str:
@@ -77,7 +77,7 @@ def format_campaign(campaign: CampaignModel) -> str:
 - **Objective**: {campaign.objective}
 - **Daily Budget**: {campaign.daily_budget_formatted}
 - **Lifetime Budget**: {campaign.lifetime_budget_formatted}
-- **Budget Remaining**: ${int(campaign.budget_remaining) / 100:,.2f}
+- **Budget Remaining**: {campaign.budget_remaining_formatted}
 - **Start Time**: {campaign.start_time or 'Not set'}
 - **Stop Time**: {campaign.stop_time or 'Not set'}
 - **Created**: {campaign.created_time}
@@ -127,7 +127,7 @@ def format_ad_set(ad_set: AdSetModel) -> str:
 - **Effective Status**: {ad_set.effective_status}
 - **Daily Budget**: {ad_set.daily_budget_formatted}
 - **Lifetime Budget**: {ad_set.lifetime_budget_formatted}
-- **Budget Remaining**: ${int(ad_set.budget_remaining) / 100:,.2f}
+- **Budget Remaining**: {ad_set.budget_remaining_formatted}
 - **Billing Event**: {ad_set.billing_event}
 - **Optimization Goal**: {ad_set.optimization_goal}
 - **Targeting**: {ad_set.targeting_summary}
