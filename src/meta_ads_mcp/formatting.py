@@ -392,6 +392,125 @@ def format_audience_list(audiences: list[CustomAudienceModel]) -> str:
     return "\n".join(lines)
 
 
+def format_insights_comparison(
+    current: InsightRow | None,
+    previous: InsightRow | None,
+    current_label: str,
+    previous_label: str,
+) -> str:
+    """Format a period-over-period comparison of insight metrics.
+
+    Shows metrics as rows with columns for Current, Previous, Change, and Change %.
+
+    Args:
+        current: Current period insight row, or None if no data.
+        previous: Previous period insight row, or None if no data.
+        current_label: Label for the current period (e.g., date range).
+        previous_label: Label for the previous period.
+
+    Returns:
+        Formatted markdown comparison table.
+    """
+    if not current and not previous:
+        return "No insights data found for either period."
+
+    metrics = [
+        ("Impressions", "impressions", "int"),
+        ("Clicks", "clicks", "int"),
+        ("Spend", "spend", "dollar"),
+        ("CTR", "ctr", "pct"),
+        ("CPC", "cpc", "dollar"),
+        ("CPM", "cpm", "dollar"),
+        ("Reach", "reach", "int"),
+    ]
+
+    lines = [
+        "## Period Comparison",
+        "",
+        f"| Metric | {current_label} | {previous_label} | Change | Change % |",
+        "|---|---|---|---|---|",
+    ]
+
+    for label, field, fmt in metrics:
+        cur_val = float(getattr(current, field, "0")) if current else 0.0
+        prev_val = float(getattr(previous, field, "0")) if previous else 0.0
+        delta = cur_val - prev_val
+        pct = (delta / prev_val * 100) if prev_val != 0 else 0.0
+
+        if fmt == "dollar":
+            cur_str = f"${cur_val:,.2f}"
+            prev_str = f"${prev_val:,.2f}"
+            delta_str = f"${delta:+,.2f}"
+        elif fmt == "pct":
+            cur_str = f"{cur_val:.2f}%"
+            prev_str = f"{prev_val:.2f}%"
+            delta_str = f"{delta:+.2f}%"
+        else:
+            cur_str = f"{int(cur_val):,}"
+            prev_str = f"{int(prev_val):,}"
+            delta_str = f"{int(delta):+,}"
+
+        pct_str = f"{pct:+.1f}%" if prev_val != 0 else "N/A"
+        lines.append(f"| {label} | {cur_str} | {prev_str} | {delta_str} | {pct_str} |")
+
+    return "\n".join(lines)
+
+
+def format_performance_comparison(
+    rows_by_entity: dict[str, InsightRow],
+    entity_type: str,
+) -> str:
+    """Format a side-by-side performance comparison across multiple entities.
+
+    Shows metrics as rows with one column per entity.
+
+    Args:
+        rows_by_entity: Mapping of entity name/label to insight row.
+        entity_type: Type of entity being compared (campaign, adset, ad).
+
+    Returns:
+        Formatted markdown comparison table.
+    """
+    if not rows_by_entity:
+        return f"No data to compare for {entity_type}s."
+
+    entities = list(rows_by_entity.keys())
+    rows = list(rows_by_entity.values())
+
+    metrics = [
+        ("Impressions", "impressions", "int"),
+        ("Clicks", "clicks", "int"),
+        ("Spend", "spend", "dollar"),
+        ("CTR", "ctr", "pct"),
+        ("CPC", "cpc", "dollar"),
+        ("CPM", "cpm", "dollar"),
+        ("Reach", "reach", "int"),
+    ]
+
+    header = "| Metric | " + " | ".join(entities) + " |"
+    separator = "|---|" + "|".join(["---"] * len(entities)) + "|"
+    lines = [
+        f"## {entity_type.title()} Performance Comparison",
+        "",
+        header,
+        separator,
+    ]
+
+    for label, field, fmt in metrics:
+        cells = [label]
+        for row in rows:
+            val = float(getattr(row, field, "0"))
+            if fmt == "dollar":
+                cells.append(f"${val:,.2f}")
+            elif fmt == "pct":
+                cells.append(f"{val:.2f}%")
+            else:
+                cells.append(f"{int(val):,}")
+        lines.append("| " + " | ".join(cells) + " |")
+
+    return "\n".join(lines)
+
+
 def format_error(message: str) -> str:
     """Format an error message as markdown.
 
