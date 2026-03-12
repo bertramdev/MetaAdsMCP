@@ -4,8 +4,6 @@
 
 Meta Ads MCP server — a locally-hosted MCP server wrapping the Meta (Facebook) Ads API for agency/multi-client ad management. Built with Python 3.12+, FastMCP, facebook-business SDK, Pydantic v2, and Poetry.
 
-Reference pattern: OpenAlex MCP (`/Users/tlong/VSProjects/MCPs/OpenAlex/`).
-
 ## Architecture Rules
 
 - Tools live in `src/meta_ads_mcp/tools/` organized by entity: `accounts.py`, `campaigns.py`, `adsets.py`, `ads.py`, `insights.py`, `creatives.py`, `audiences.py`
