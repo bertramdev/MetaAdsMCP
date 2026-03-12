@@ -13,6 +13,15 @@ from mcp.server.fastmcp import FastMCP
 
 from meta_ads_mcp.client import MetaAdsClient
 from meta_ads_mcp.config import MetaAdsConfig
+from meta_ads_mcp.tools import (
+    accounts,
+    ads,
+    adsets,
+    audiences,
+    campaigns,
+    creatives,
+    insights,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +61,15 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
 
 
 mcp = FastMCP("Meta Ads MCP", lifespan=app_lifespan)
+
+# Register all tool modules
+accounts.register(mcp)
+campaigns.register(mcp)
+adsets.register(mcp)
+ads.register(mcp)
+insights.register(mcp)
+creatives.register(mcp)
+audiences.register(mcp)
 
 
 def main() -> None:

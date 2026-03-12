@@ -24,38 +24,38 @@ GitHub Project: [Meta Ads MCP](https://github.com/users/tomleelong/projects/2)
 ## Phase 2: Read Tools
 
 ### Accounts
-- [ ] #8 `get_ad_accounts` — list accessible ad accounts
-- [ ] #9 `get_account_info` — detailed account info
+- [x] #8 `get_ad_accounts` — list accessible ad accounts
+- [x] #9 `get_account_info` — detailed account info
 
 ### Campaigns
-- [ ] #10 `list_campaigns` — list with status filtering
-- [ ] #11 `get_campaign` — detailed campaign info
+- [x] #10 `list_campaigns` — list with status filtering
+- [x] #11 `get_campaign` — detailed campaign info
 
 ### Ad Sets
-- [ ] #12 `list_ad_sets` — list with campaign filter
-- [ ] #13 `get_ad_set` — detailed ad set info with targeting
+- [x] #12 `list_ad_sets` — list with campaign filter
+- [x] #13 `get_ad_set` — detailed ad set info with targeting
 
 ### Ads
-- [ ] #14 `list_ads` — list with ad set/campaign filter
-- [ ] #15 `get_ad` — detailed ad info with creative reference
+- [x] #14 `list_ads` — list with ad set/campaign filter
+- [x] #15 `get_ad` — detailed ad info with creative reference
 
 ### Insights
-- [ ] #16 `get_insights` — flexible date/breakdowns/level query
-- [ ] #17 `get_campaign_insights` — campaign performance with period comparison
-- [ ] #18 `get_account_insights` — account-level performance metrics
-- [ ] #19 `compare_performance` — compare entities side-by-side
-- [ ] #20 `get_breakdown_report` — age/gender/placement/device breakdowns
+- [x] #16 `get_insights` — flexible date/breakdowns/level query
+- [x] #17 `get_campaign_insights` — campaign performance with period comparison
+- [x] #18 `get_account_insights` — account-level performance metrics
+- [x] #19 `compare_performance` — compare entities side-by-side
+- [x] #20 `get_breakdown_report` — age/gender/placement/device breakdowns
 
 ### Creatives
-- [ ] #21 `list_creatives` — list ad creatives
-- [ ] #22 `get_creative` — creative details with thumbnail and body
+- [x] #21 `list_creatives` — list ad creatives
+- [x] #22 `get_creative` — creative details with thumbnail and body
 
 ### Audiences
-- [ ] #23 `list_audiences` — custom and lookalike audiences
-- [ ] #24 `get_audience` — audience details, size, status
+- [x] #23 `list_audiences` — custom and lookalike audiences
+- [x] #24 `get_audience` — audience details, size, status
 
 ### Testing
-- [ ] #25 Unit tests for all read tools with mocked fixtures
+- [x] #25 Unit tests for all read tools with mocked fixtures
 
 ## Phase 3: Write Tools
 

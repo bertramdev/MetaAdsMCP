@@ -59,3 +59,7 @@ disable_error_code = ["import-untyped"]
 [[tool.mypy.overrides]]
 module = ["decouple", "facebook_business.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["meta_ads_mcp.tools.*"]
+disable_error_code = ["type-arg"]
