@@ -54,13 +54,15 @@ async def get_insights(
         time_range = None
         if start_date and end_date:
             time_range = {"since": start_date, "until": end_date}
+        elif date_preset:
+            since, until = resolve_date_preset(date_preset)
+            time_range = {"since": since, "until": until}
         breakdown_list = (
             [b.strip() for b in breakdowns.split(",")] if breakdowns else None
         )
         field_list = [f.strip() for f in fields.split(",")] if fields else None
         raw = await client.get_insights(
             account_id=account_id,
-            date_preset=date_preset if not time_range else None,
             level=level,
             breakdowns=breakdown_list,
             fields=field_list,
@@ -69,8 +71,8 @@ async def get_insights(
         )
         models = [InsightRow(**d) for d in raw]
         return format_insights_table(models)
-    except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+    except (MetaAdsError, ValueError) as e:
+        return format_error(str(e))
 
 
 async def get_account_insights(
@@ -253,18 +255,20 @@ async def get_breakdown_report(
 
     try:
         client = get_client(ctx)
+        since, until = resolve_date_preset(date_preset)
+        time_range = {"since": since, "until": until}
         raw = await client.get_insights(
             account_id=account_id,
-            date_preset=date_preset,
             level=level,
             breakdowns=[breakdown],
+            time_range=time_range,
             limit=limit,
         )
         models = [InsightRow(**d) for d in raw]
         title = f"Breakdown by {breakdown.replace('_', ' ').title()}"
         return format_insights_table(models, title=title)
-    except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+    except (MetaAdsError, ValueError) as e:
+        return format_error(str(e))
 
 
 def register(mcp: FastMCP) -> None:

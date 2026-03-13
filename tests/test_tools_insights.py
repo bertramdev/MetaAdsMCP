@@ -193,7 +193,7 @@ class TestGetInsights:
             "since": "2026-03-01",
             "until": "2026-03-07",
         }
-        assert call_kwargs["date_preset"] is None
+        assert "date_preset" not in call_kwargs
 
     @pytest.mark.asyncio
     async def test_breakdowns_parsed(
@@ -525,13 +525,14 @@ class TestGetBreakdownReport:
             limit=10,
         )
 
-        mock_client.get_insights.assert_called_once_with(
-            account_id="act_123",
-            date_preset="last_7d",
-            level="campaign",
-            breakdowns=["gender"],
-            limit=10,
-        )
+        call_kwargs = mock_client.get_insights.call_args.kwargs
+        assert call_kwargs["account_id"] == "act_123"
+        assert call_kwargs["level"] == "campaign"
+        assert call_kwargs["breakdowns"] == ["gender"]
+        assert call_kwargs["limit"] == 10
+        assert "time_range" in call_kwargs
+        assert call_kwargs["time_range"]["since"] is not None
+        assert call_kwargs["time_range"]["until"] is not None
 
     @pytest.mark.asyncio
     async def test_error(self, mock_context: MagicMock, mock_client: AsyncMock) -> None:
