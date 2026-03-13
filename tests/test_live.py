@@ -19,9 +19,16 @@ from meta_ads_mcp.formatting import (
     format_account,
     format_account_list,
     format_campaign_list,
+    format_creative_list,
+    format_diagnostics,
     format_insights_table,
 )
-from meta_ads_mcp.models import AdAccountModel, CampaignModel, InsightRow
+from meta_ads_mcp.models import (
+    AdAccountModel,
+    AdCreativeModel,
+    CampaignModel,
+    InsightRow,
+)
 
 
 def _can_run_live() -> bool:
@@ -187,6 +194,69 @@ class TestInsights:
             print(f"\n{output}")
 
 
+class TestCreatives:
+    """Test creative retrieval with real data."""
+
+    async def test_list_creatives(
+        self,
+        client: MetaAdsClient,
+        require_default_account: None,
+    ) -> None:
+        """List creatives and verify data structure."""
+        raw = await client.get_creatives(limit=5)
+        print(f"\n  Found {len(raw)} creative(s)")
+        if raw:
+            models = [AdCreativeModel(**d) for d in raw]
+            output = format_creative_list(models)
+            print(f"\n--- Creatives ---\n{output}")
+            for m in models:
+                assert m.id
+                assert m.name
+
+
+class TestAudiences:
+    """Test audience retrieval with real data."""
+
+    async def test_list_audiences(
+        self,
+        client: MetaAdsClient,
+        require_default_account: None,
+    ) -> None:
+        """List audiences and verify data structure."""
+        raw = await client.get_audiences(limit=5)
+        print(f"\n  Found {len(raw)} audience(s)")
+        if raw:
+            for a in raw:
+                assert "id" in a
+                assert "name" in a
+                subtype = a.get("subtype", "N/A")
+                print(f"    {a['id']}: {a.get('name', 'N/A')} ({subtype})")
+
+
+class TestDiagnostics:
+    """Test diagnostics retrieval with real data."""
+
+    async def test_campaign_diagnostics(
+        self,
+        client: MetaAdsClient,
+        require_default_account: None,
+    ) -> None:
+        """Get diagnostics for the first active campaign."""
+        raw = await client.get_campaigns(status_filter=["ACTIVE"], limit=1)
+        if not raw:
+            pytest.skip("No active campaigns to diagnose")
+        campaign_id = raw[0]["id"]
+        diag = await client.get_campaign_diagnostics(campaign_id)
+        assert "id" in diag
+        output = format_diagnostics(
+            "Campaign",
+            diag.get("name", "Unknown"),
+            diag.get("issues_info", []),
+            diag.get("recommendations", []),
+        )
+        print(f"\n--- Campaign Diagnostics ---\n{output}")
+
+
 class TestErrorHandling:
     """Verify error handling with bad inputs."""
 
@@ -195,3 +265,12 @@ class TestErrorHandling:
         with pytest.raises(MetaAdsError) as exc_info:
             await client.get_account_info("act_000000000")
         print(f"\n  Error (expected): {exc_info.value.message}")
+
+    async def test_error_has_code(self, client: MetaAdsClient) -> None:
+        """Verify error includes an error code from the API."""
+        with pytest.raises(MetaAdsError) as exc_info:
+            await client.get_account_info("act_000000000")
+        err = exc_info.value
+        # Meta typically returns code 100 or 803 for invalid objects
+        assert err.error_code is not None, "Expected an error code from the API"
+        print(f"\n  Error code: {err.error_code}, hint: {err.hint!r}")
