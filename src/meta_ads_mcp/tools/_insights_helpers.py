@@ -14,6 +14,24 @@ VALID_BREAKDOWNS = frozenset(
 )
 
 
+def _quarter_start(d: date) -> date:
+    """Return the first day of the quarter containing *d*."""
+    quarter_month = ((d.month - 1) // 3) * 3 + 1
+    return d.replace(month=quarter_month, day=1)
+
+
+def _prev_quarter_start(d: date) -> date:
+    """Return the first day of the previous quarter."""
+    qs = _quarter_start(d)
+    # Go back one day into previous quarter, then find its start
+    return _quarter_start(qs - timedelta(days=1))
+
+
+def _prev_quarter_end(d: date) -> date:
+    """Return the last day of the previous quarter."""
+    return _quarter_start(d) - timedelta(days=1)
+
+
 def resolve_date_preset(preset: str) -> tuple[str, str]:
     """Map a date preset like 'last_7d' to (since, until) date strings.
 
@@ -40,6 +58,15 @@ def resolve_date_preset(preset: str) -> tuple[str, str]:
             (today.replace(day=1) - timedelta(days=1)).replace(day=1),
             today.replace(day=1) - timedelta(days=1),
         ),
+        "last_3d": (today - timedelta(days=3), yesterday),
+        "last_90d": (today - timedelta(days=90), yesterday),
+        "this_year": (today.replace(month=1, day=1), today),
+        "last_year": (
+            today.replace(year=today.year - 1, month=1, day=1),
+            today.replace(year=today.year - 1, month=12, day=31),
+        ),
+        "this_quarter": (_quarter_start(today), today),
+        "last_quarter": (_prev_quarter_start(today), _prev_quarter_end(today)),
     }
 
     if preset not in presets:
