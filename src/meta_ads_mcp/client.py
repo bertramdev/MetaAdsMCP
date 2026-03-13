@@ -648,3 +648,350 @@ class MetaAdsClient:
                 raise self._handle_api_error(e) from e
 
         return await asyncio.to_thread(_fetch)
+
+    # ------------------------------------------------------------------
+    # Write methods
+    # ------------------------------------------------------------------
+
+    async def create_campaign(
+        self,
+        name: str,
+        objective: str,
+        account_id: str | None = None,
+        status: str = "PAUSED",
+        daily_budget: int | None = None,
+        lifetime_budget: int | None = None,
+        special_ad_categories: list[str] | None = None,
+        start_time: str | None = None,
+        stop_time: str | None = None,
+        bid_strategy: str | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Create a new campaign.
+
+        Args:
+            name: Campaign name.
+            objective: Campaign objective (e.g., OUTCOME_TRAFFIC).
+            account_id: Ad account ID, or None for default.
+            status: Initial status (default PAUSED).
+            daily_budget: Daily budget in cents.
+            lifetime_budget: Lifetime budget in cents.
+            special_ad_categories: List of special ad categories.
+            start_time: Campaign start time (ISO 8601).
+            stop_time: Campaign stop time (ISO 8601).
+            bid_strategy: Bid strategy (e.g., LOWEST_COST_WITHOUT_CAP).
+            dry_run: If True, validate only without creating.
+
+        Returns:
+            Created campaign data dictionary.
+        """
+        self._ensure_initialized()
+
+        def _create() -> dict[str, Any]:
+            try:
+                account = self._get_account(account_id)
+                params: dict[str, Any] = {
+                    "name": name,
+                    "objective": objective,
+                    "status": status,
+                    "special_ad_categories": special_ad_categories or ["NONE"],
+                }
+                if daily_budget is not None:
+                    params["daily_budget"] = daily_budget
+                if lifetime_budget is not None:
+                    params["lifetime_budget"] = lifetime_budget
+                if start_time:
+                    params["start_time"] = start_time
+                if stop_time:
+                    params["stop_time"] = stop_time
+                if bid_strategy:
+                    params["bid_strategy"] = bid_strategy
+                if dry_run:
+                    params["execution_options"] = ["validate_only"]
+                result = account.create_campaign(params=params)
+                return dict(result)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_create)
+
+    async def update_campaign(
+        self,
+        campaign_id: str,
+        name: str | None = None,
+        status: str | None = None,
+        daily_budget: int | None = None,
+        lifetime_budget: int | None = None,
+        start_time: str | None = None,
+        stop_time: str | None = None,
+        bid_strategy: str | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Update an existing campaign.
+
+        Args:
+            campaign_id: The campaign ID to update.
+            name: New campaign name.
+            status: New status (ACTIVE, PAUSED, ARCHIVED).
+            daily_budget: New daily budget in cents.
+            lifetime_budget: New lifetime budget in cents.
+            start_time: New start time (ISO 8601).
+            stop_time: New stop time (ISO 8601).
+            bid_strategy: New bid strategy.
+            dry_run: If True, validate only without updating.
+
+        Returns:
+            Update result dictionary.
+        """
+        self._ensure_initialized()
+
+        def _update() -> dict[str, Any]:
+            try:
+                campaign = Campaign(campaign_id)
+                params: dict[str, Any] = {}
+                if name is not None:
+                    params["name"] = name
+                if status is not None:
+                    params["status"] = status
+                if daily_budget is not None:
+                    params["daily_budget"] = daily_budget
+                if lifetime_budget is not None:
+                    params["lifetime_budget"] = lifetime_budget
+                if start_time is not None:
+                    params["start_time"] = start_time
+                if stop_time is not None:
+                    params["stop_time"] = stop_time
+                if bid_strategy is not None:
+                    params["bid_strategy"] = bid_strategy
+                if dry_run:
+                    params["execution_options"] = ["validate_only"]
+                result = campaign.api_update(params=params)
+                return dict(result) if result else {}
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_update)
+
+    async def create_ad_set(
+        self,
+        name: str,
+        campaign_id: str,
+        billing_event: str,
+        optimization_goal: str,
+        targeting: dict[str, Any],
+        account_id: str | None = None,
+        status: str = "PAUSED",
+        daily_budget: int | None = None,
+        lifetime_budget: int | None = None,
+        bid_strategy: str | None = None,
+        bid_amount: int | None = None,
+        start_time: str | None = None,
+        end_time: str | None = None,
+        promoted_object: dict[str, Any] | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Create a new ad set.
+
+        Args:
+            name: Ad set name.
+            campaign_id: Parent campaign ID.
+            billing_event: Billing event (e.g., IMPRESSIONS).
+            optimization_goal: Optimization goal (e.g., LINK_CLICKS).
+            targeting: Targeting specification dictionary.
+            account_id: Ad account ID, or None for default.
+            status: Initial status (default PAUSED).
+            daily_budget: Daily budget in cents.
+            lifetime_budget: Lifetime budget in cents.
+            bid_strategy: Bid strategy.
+            bid_amount: Bid amount in cents.
+            start_time: Start time (ISO 8601).
+            end_time: End time (ISO 8601).
+            promoted_object: Promoted object dictionary.
+            dry_run: If True, validate only without creating.
+
+        Returns:
+            Created ad set data dictionary.
+        """
+        self._ensure_initialized()
+
+        def _create() -> dict[str, Any]:
+            try:
+                account = self._get_account(account_id)
+                params: dict[str, Any] = {
+                    "name": name,
+                    "campaign_id": campaign_id,
+                    "billing_event": billing_event,
+                    "optimization_goal": optimization_goal,
+                    "targeting": targeting,
+                    "status": status,
+                }
+                if daily_budget is not None:
+                    params["daily_budget"] = daily_budget
+                if lifetime_budget is not None:
+                    params["lifetime_budget"] = lifetime_budget
+                if bid_strategy:
+                    params["bid_strategy"] = bid_strategy
+                if bid_amount is not None:
+                    params["bid_amount"] = bid_amount
+                if start_time:
+                    params["start_time"] = start_time
+                if end_time:
+                    params["end_time"] = end_time
+                if promoted_object:
+                    params["promoted_object"] = promoted_object
+                if dry_run:
+                    params["execution_options"] = ["validate_only"]
+                result = account.create_ad_set(params=params)
+                return dict(result)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_create)
+
+    async def update_ad_set(
+        self,
+        ad_set_id: str,
+        name: str | None = None,
+        status: str | None = None,
+        daily_budget: int | None = None,
+        lifetime_budget: int | None = None,
+        targeting: dict[str, Any] | None = None,
+        bid_strategy: str | None = None,
+        bid_amount: int | None = None,
+        start_time: str | None = None,
+        end_time: str | None = None,
+        optimization_goal: str | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Update an existing ad set.
+
+        Args:
+            ad_set_id: The ad set ID to update.
+            name: New ad set name.
+            status: New status (ACTIVE, PAUSED, ARCHIVED).
+            daily_budget: New daily budget in cents.
+            lifetime_budget: New lifetime budget in cents.
+            targeting: New targeting specification.
+            bid_strategy: New bid strategy.
+            bid_amount: New bid amount in cents.
+            start_time: New start time (ISO 8601).
+            end_time: New end time (ISO 8601).
+            optimization_goal: New optimization goal.
+            dry_run: If True, validate only without updating.
+
+        Returns:
+            Update result dictionary.
+        """
+        self._ensure_initialized()
+
+        def _update() -> dict[str, Any]:
+            try:
+                ad_set = AdSet(ad_set_id)
+                params: dict[str, Any] = {}
+                if name is not None:
+                    params["name"] = name
+                if status is not None:
+                    params["status"] = status
+                if daily_budget is not None:
+                    params["daily_budget"] = daily_budget
+                if lifetime_budget is not None:
+                    params["lifetime_budget"] = lifetime_budget
+                if targeting is not None:
+                    params["targeting"] = targeting
+                if bid_strategy is not None:
+                    params["bid_strategy"] = bid_strategy
+                if bid_amount is not None:
+                    params["bid_amount"] = bid_amount
+                if start_time is not None:
+                    params["start_time"] = start_time
+                if end_time is not None:
+                    params["end_time"] = end_time
+                if optimization_goal is not None:
+                    params["optimization_goal"] = optimization_goal
+                if dry_run:
+                    params["execution_options"] = ["validate_only"]
+                result = ad_set.api_update(params=params)
+                return dict(result) if result else {}
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_update)
+
+    async def create_ad(
+        self,
+        name: str,
+        adset_id: str,
+        creative_id: str,
+        account_id: str | None = None,
+        status: str = "PAUSED",
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Create a new ad.
+
+        Args:
+            name: Ad name.
+            adset_id: Parent ad set ID.
+            creative_id: Creative ID to use.
+            account_id: Ad account ID, or None for default.
+            status: Initial status (default PAUSED).
+            dry_run: If True, validate only without creating.
+
+        Returns:
+            Created ad data dictionary.
+        """
+        self._ensure_initialized()
+
+        def _create() -> dict[str, Any]:
+            try:
+                account = self._get_account(account_id)
+                params: dict[str, Any] = {
+                    "name": name,
+                    "adset_id": adset_id,
+                    "creative": {"creative_id": creative_id},
+                    "status": status,
+                }
+                if dry_run:
+                    params["execution_options"] = ["validate_only"]
+                result = account.create_ad(params=params)
+                return dict(result)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_create)
+
+    async def update_ad(
+        self,
+        ad_id: str,
+        name: str | None = None,
+        status: str | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Update an existing ad.
+
+        Args:
+            ad_id: The ad ID to update.
+            name: New ad name.
+            status: New status (ACTIVE, PAUSED, ARCHIVED).
+            dry_run: If True, validate only without updating.
+
+        Returns:
+            Update result dictionary.
+        """
+        self._ensure_initialized()
+
+        def _update() -> dict[str, Any]:
+            try:
+                ad = Ad(ad_id)
+                params: dict[str, Any] = {}
+                if name is not None:
+                    params["name"] = name
+                if status is not None:
+                    params["status"] = status
+                if dry_run:
+                    params["execution_options"] = ["validate_only"]
+                result = ad.api_update(params=params)
+                return dict(result) if result else {}
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_update)

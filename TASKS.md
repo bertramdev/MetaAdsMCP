@@ -59,13 +59,13 @@ GitHub Project: [Meta Ads MCP](https://github.com/users/tomleelong/projects/2)
 
 ## Phase 3: Write Tools
 
-- [ ] #26 `create_campaign` — defaults PAUSED, dry_run support
-- [ ] #27 `update_campaign` — name, budget, status, schedule
-- [ ] #28 `create_ad_set` — targeting, budget, schedule, bid strategy
-- [ ] #29 `update_ad_set` — targeting, budget, status, schedule
-- [ ] #30 `create_ad` — with creative reference
-- [ ] #31 `update_ad_status` — pause/activate/archive
-- [ ] #32 Unit tests for all write tools
+- [x] #26 `create_campaign` — defaults PAUSED, dry_run support
+- [x] #27 `update_campaign` — name, budget, status, schedule
+- [x] #28 `create_ad_set` — targeting, budget, schedule, bid strategy
+- [x] #29 `update_ad_set` — targeting, budget, status, schedule
+- [x] #30 `create_ad` — with creative reference
+- [x] #31 `update_ad_status` — pause/activate/archive
+- [x] #32 Unit tests for all write tools
 
 ## Phase 4: Polish
 

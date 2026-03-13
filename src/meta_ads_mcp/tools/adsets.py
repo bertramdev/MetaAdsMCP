@@ -1,11 +1,28 @@
 """Ad set management tools."""
 
+from typing import Any
+
 from mcp.server.fastmcp import Context, FastMCP
 
 from meta_ads_mcp.client import MetaAdsError
-from meta_ads_mcp.formatting import format_ad_set, format_ad_set_list, format_error
+from meta_ads_mcp.formatting import (
+    format_ad_set,
+    format_ad_set_list,
+    format_error,
+    format_update_result,
+    format_write_result,
+)
 from meta_ads_mcp.models import AdSetModel
 from meta_ads_mcp.tools import get_client
+from meta_ads_mcp.tools._write_helpers import (
+    cents_display,
+    dollars_to_cents,
+    fetch_and_update,
+    format_write_error,
+    merge_updates,
+    parse_json_param,
+    validate_status,
+)
 
 
 async def list_ad_sets(
@@ -59,6 +76,209 @@ async def get_ad_set(ctx: Context, ad_set_id: str) -> str:
         return format_error(e.message)
 
 
+async def create_ad_set(
+    ctx: Context,
+    name: str,
+    campaign_id: str,
+    billing_event: str,
+    optimization_goal: str,
+    targeting: str,
+    account_id: str | None = None,
+    daily_budget: str | None = None,
+    lifetime_budget: str | None = None,
+    bid_strategy: str | None = None,
+    bid_amount: str | None = None,
+    start_time: str | None = None,
+    end_time: str | None = None,
+    promoted_object: str | None = None,
+    dry_run: bool = False,
+) -> str:
+    """Create a new ad set (defaults to PAUSED).
+
+    Creates an ad set under the specified campaign. The ad set starts
+    as PAUSED for safety. Use update_ad_set to activate it.
+
+    Args:
+        name: Ad set name.
+        campaign_id: Parent campaign ID.
+        billing_event: Billing event (e.g., IMPRESSIONS, LINK_CLICKS).
+        optimization_goal: Optimization goal (e.g., LINK_CLICKS, CONVERSIONS).
+        targeting: Targeting spec as JSON string
+            (e.g., '{"geo_locations":{"countries":["US"]}}'). Required.
+        account_id: Ad account ID (e.g., act_123456789). Optional.
+        daily_budget: Daily budget in dollars (e.g., "50.00"). Optional.
+        lifetime_budget: Lifetime budget in dollars. Optional.
+        bid_strategy: Bid strategy. Optional.
+        bid_amount: Bid amount in dollars (e.g., "1.50"). Optional.
+        start_time: Start time in ISO 8601 format. Optional.
+        end_time: End time in ISO 8601 format. Optional.
+        promoted_object: Promoted object as JSON string. Optional.
+        dry_run: If True, validate without creating. Default False.
+    """
+    try:
+        client = get_client(ctx)
+
+        targeting_dict: dict[str, Any] = parse_json_param(targeting, "targeting")
+        promoted_dict: dict[str, Any] | None = None
+        if promoted_object:
+            promoted_dict = parse_json_param(promoted_object, "promoted_object")
+
+        daily_cents = dollars_to_cents(daily_budget) if daily_budget else None
+        lifetime_cents = dollars_to_cents(lifetime_budget) if lifetime_budget else None
+        bid_cents = dollars_to_cents(bid_amount) if bid_amount else None
+
+        raw = await client.create_ad_set(
+            name=name,
+            campaign_id=campaign_id,
+            billing_event=billing_event,
+            optimization_goal=optimization_goal,
+            targeting=targeting_dict,
+            account_id=account_id,
+            daily_budget=daily_cents,
+            lifetime_budget=lifetime_cents,
+            bid_strategy=bid_strategy,
+            bid_amount=bid_cents,
+            start_time=start_time,
+            end_time=end_time,
+            promoted_object=promoted_dict,
+            dry_run=dry_run,
+        )
+
+        model = AdSetModel(
+            id=raw.get("id", ""),
+            name=name,
+            status="PAUSED",
+            campaign_id=campaign_id,
+            billing_event=billing_event,
+            optimization_goal=optimization_goal,
+            targeting=targeting_dict,
+            daily_budget=str(daily_cents) if daily_cents else "0",
+            lifetime_budget=str(lifetime_cents) if lifetime_cents else "0",
+            start_time=start_time or "",
+            end_time=end_time or "",
+        )
+        detail = format_ad_set(model)
+        return format_write_result("Created", "Ad Set", detail, dry_run=dry_run)
+    except (MetaAdsError, ValueError) as e:
+        return format_write_error(e)
+
+
+async def update_ad_set(
+    ctx: Context,
+    ad_set_id: str,
+    name: str | None = None,
+    status: str | None = None,
+    daily_budget: str | None = None,
+    lifetime_budget: str | None = None,
+    targeting: str | None = None,
+    bid_strategy: str | None = None,
+    bid_amount: str | None = None,
+    start_time: str | None = None,
+    end_time: str | None = None,
+    optimization_goal: str | None = None,
+    dry_run: bool = False,
+) -> str:
+    """Update an existing ad set.
+
+    Modifies ad set properties such as name, status, budget, targeting,
+    or schedule. Shows before/after comparison for changed fields.
+
+    Args:
+        ad_set_id: The ad set ID to update.
+        name: New ad set name. Optional.
+        status: New status (ACTIVE, PAUSED, ARCHIVED). Optional.
+        daily_budget: New daily budget in dollars (e.g., "75.00"). Optional.
+        lifetime_budget: New lifetime budget in dollars. Optional.
+        targeting: New targeting spec as JSON string. Optional.
+        bid_strategy: New bid strategy. Optional.
+        bid_amount: New bid amount in dollars. Optional.
+        start_time: New start time in ISO 8601 format. Optional.
+        end_time: New end time in ISO 8601 format. Optional.
+        optimization_goal: New optimization goal. Optional.
+        dry_run: If True, validate without updating. Default False.
+    """
+    try:
+        client = get_client(ctx)
+
+        if status is not None:
+            status = validate_status(status)
+
+        targeting_dict: dict[str, Any] | None = None
+        if targeting is not None:
+            targeting_dict = parse_json_param(targeting, "targeting")
+
+        daily_cents = dollars_to_cents(daily_budget) if daily_budget else None
+        lifetime_cents = dollars_to_cents(lifetime_budget) if lifetime_budget else None
+        bid_cents = dollars_to_cents(bid_amount) if bid_amount else None
+
+        # Fetch current state and apply update concurrently
+        current = await fetch_and_update(
+            client.get_ad_set(ad_set_id),
+            client.update_ad_set(
+                ad_set_id=ad_set_id,
+                name=name,
+                status=status,
+                daily_budget=daily_cents,
+                lifetime_budget=lifetime_cents,
+                targeting=targeting_dict,
+                bid_strategy=bid_strategy,
+                bid_amount=bid_cents,
+                start_time=start_time,
+                end_time=end_time,
+                optimization_goal=optimization_goal,
+                dry_run=dry_run,
+            ),
+        )
+
+        # Build changes dict for display
+        changes: dict[str, tuple[str, str]] = {}
+        if name is not None:
+            changes["Name"] = (current.get("name", ""), name)
+        if status is not None:
+            changes["Status"] = (current.get("status", ""), status)
+        if daily_cents is not None:
+            changes["Daily Budget"] = (
+                cents_display(current.get("daily_budget", "0") or "0"),
+                cents_display(daily_cents),
+            )
+        if lifetime_cents is not None:
+            changes["Lifetime Budget"] = (
+                cents_display(current.get("lifetime_budget", "0") or "0"),
+                cents_display(lifetime_cents),
+            )
+        if targeting is not None:
+            changes["Targeting"] = ("(previous)", "(updated)")
+        if optimization_goal is not None:
+            changes["Optimization Goal"] = (
+                current.get("optimization_goal", ""),
+                optimization_goal,
+            )
+
+        model = AdSetModel(
+            **merge_updates(
+                current,
+                {
+                    "name": name,
+                    "status": status,
+                    "daily_budget": (
+                        str(daily_cents) if daily_cents is not None else None
+                    ),
+                    "lifetime_budget": (
+                        str(lifetime_cents) if lifetime_cents is not None else None
+                    ),
+                    "targeting": targeting_dict,
+                    "optimization_goal": optimization_goal,
+                },
+            )
+        )
+        detail = format_ad_set(model)
+        return format_update_result(
+            "Ad Set", ad_set_id, changes, detail, dry_run=dry_run
+        )
+    except (MetaAdsError, ValueError) as e:
+        return format_write_error(e)
+
+
 def register(mcp: FastMCP) -> None:
     """Register ad set tools with the MCP server.
 
@@ -67,3 +287,5 @@ def register(mcp: FastMCP) -> None:
     """
     mcp.tool()(list_ad_sets)
     mcp.tool()(get_ad_set)
+    mcp.tool()(create_ad_set)
+    mcp.tool()(update_ad_set)

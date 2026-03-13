@@ -511,6 +511,77 @@ def format_performance_comparison(
     return "\n".join(lines)
 
 
+def format_write_result(
+    action: str,
+    entity_type: str,
+    detail: str,
+    dry_run: bool = False,
+) -> str:
+    """Format the result of a create operation as markdown.
+
+    Prepends a success/dry-run header to existing entity detail output.
+
+    Args:
+        action: The action performed (e.g., "Created", "Updated").
+        entity_type: The entity type (e.g., "Campaign", "Ad Set", "Ad").
+        detail: The formatted entity detail string.
+        dry_run: Whether this was a dry run (validation only).
+
+    Returns:
+        Formatted markdown string with header and entity detail.
+    """
+    status_note = "PAUSED" if action == "Created" else ""
+    header = f"> **{entity_type} {action}**"
+    if status_note:
+        header += f" | Status: {status_note}"
+    lines = [header]
+    if dry_run:
+        lines.append("> _Dry run — no changes were made._")
+    lines.append("")
+    lines.append(detail)
+    return "\n".join(lines)
+
+
+def format_update_result(
+    entity_type: str,
+    entity_id: str,
+    changes: dict[str, tuple[str, str]],
+    detail: str,
+    dry_run: bool = False,
+) -> str:
+    """Format the result of an update operation as markdown.
+
+    Shows a before/after changes table followed by entity detail.
+
+    Args:
+        entity_type: The entity type (e.g., "Campaign", "Ad Set", "Ad").
+        entity_id: The entity ID.
+        changes: Mapping of field name to (before, after) tuples.
+        detail: The formatted entity detail string.
+        dry_run: Whether this was a dry run (validation only).
+
+    Returns:
+        Formatted markdown string with changes table and entity detail.
+    """
+    header = f"> **{entity_type} Updated** | ID: {entity_id}"
+    lines = [header]
+    if dry_run:
+        lines.append("> _Dry run — no changes were made._")
+    lines.append("")
+
+    if changes:
+        lines.append("### Changes Applied")
+        lines.append("")
+        lines.append("| Field | Before | After |")
+        lines.append("|---|---|---|")
+        for field, (before, after) in changes.items():
+            lines.append(f"| {field} | {before} | {after} |")
+        lines.append("")
+
+    lines.append(detail)
+    return "\n".join(lines)
+
+
 def format_error(message: str) -> str:
     """Format an error message as markdown.
 
