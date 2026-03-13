@@ -551,6 +551,9 @@ def format_performance_comparison(
     return "\n".join(lines)
 
 
+_PAUSED_ON_CREATE_TYPES: frozenset[str] = frozenset({"Campaign", "Ad Set", "Ad"})
+
+
 def format_write_result(
     action: str,
     entity_type: str,
@@ -570,9 +573,8 @@ def format_write_result(
     Returns:
         Formatted markdown string with header and entity detail.
     """
-    paused_types = {"Campaign", "Ad Set", "Ad"}
-    show_paused = action == "Created" and entity_type in paused_types
-    status_note = "PAUSED" if show_paused else ""
+    is_paused = action == "Created" and entity_type in _PAUSED_ON_CREATE_TYPES
+    status_note = "PAUSED" if is_paused else ""
     header = f"> **{entity_type} {action}**"
     if status_note:
         header += f" | Status: {status_note}"
