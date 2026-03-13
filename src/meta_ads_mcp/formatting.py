@@ -626,16 +626,27 @@ def format_update_result(
     return "\n".join(lines)
 
 
-def format_error(message: str) -> str:
+def format_error(
+    message: str,
+    error_code: int | None = None,
+    hint: str = "",
+) -> str:
     """Format an error message as markdown.
 
     Args:
         message: The error message.
+        error_code: Optional Meta API error code.
+        hint: Optional actionable suggestion.
 
     Returns:
         Formatted markdown error string.
     """
-    return f"## Error\n\n{message}"
+    lines = [f"## Error\n\n{message}"]
+    if error_code is not None:
+        lines.append(f"\n**Error Code**: {error_code}")
+    if hint:
+        lines.append(f"\n**Suggestion**: {hint}")
+    return "".join(lines)
 
 
 def format_diagnostics(

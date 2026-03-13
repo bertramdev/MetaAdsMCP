@@ -69,7 +69,7 @@ async def get_insights(
         models = [InsightRow(**d) for d in raw]
         return format_insights_table(models)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def get_account_insights(
@@ -153,7 +153,9 @@ async def get_campaign_insights(
             previous_label=previous_label,
         )
     except (MetaAdsError, ValueError) as e:
-        return format_error(str(e))
+        code = e.error_code if isinstance(e, MetaAdsError) else None
+        hint = e.hint if isinstance(e, MetaAdsError) else ""
+        return format_error(str(e), error_code=code, hint=hint)
 
 
 async def compare_performance(
@@ -216,7 +218,9 @@ async def compare_performance(
 
         return format_performance_comparison(rows_by_entity, entity_type)
     except (MetaAdsError, ValueError) as e:
-        return format_error(str(e))
+        code = e.error_code if isinstance(e, MetaAdsError) else None
+        hint = e.hint if isinstance(e, MetaAdsError) else ""
+        return format_error(str(e), error_code=code, hint=hint)
 
 
 async def get_breakdown_report(
@@ -259,7 +263,7 @@ async def get_breakdown_report(
         title = f"Breakdown by {breakdown.replace('_', ' ').title()}"
         return format_insights_table(models, title=title)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 def register(mcp: FastMCP) -> None:

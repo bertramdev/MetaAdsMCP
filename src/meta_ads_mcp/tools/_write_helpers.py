@@ -132,7 +132,7 @@ def merge_updates(current: dict[str, Any], updates: dict[str, Any]) -> dict[str,
 def format_write_error(e: Exception) -> str:
     """Format a write operation error as markdown.
 
-    Handles both MetaAdsError (with .message) and plain exceptions.
+    Handles both MetaAdsError (with .message, error_code, hint) and plain exceptions.
 
     Args:
         e: The caught exception.
@@ -140,8 +140,9 @@ def format_write_error(e: Exception) -> str:
     Returns:
         Formatted error markdown string.
     """
-    msg = e.message if isinstance(e, MetaAdsError) else str(e)
-    return format_error(msg)
+    if isinstance(e, MetaAdsError):
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+    return format_error(str(e))
 
 
 async def fetch_and_update(

@@ -51,7 +51,7 @@ async def list_campaigns(
         models = [CampaignModel(**d) for d in raw]
         return format_campaign_list(models)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def get_campaign(ctx: Context, campaign_id: str) -> str:
@@ -68,7 +68,7 @@ async def get_campaign(ctx: Context, campaign_id: str) -> str:
         model = CampaignModel(**raw)
         return format_campaign(model)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def create_campaign(
@@ -310,7 +310,7 @@ async def get_campaign_diagnostics(ctx: Context, campaign_id: str) -> str:
             "Campaign", model.name, model.issues_info, model.recommendations
         )
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 def register(mcp: FastMCP) -> None:
