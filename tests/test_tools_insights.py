@@ -53,6 +53,60 @@ class TestResolveDatePreset:
         assert until == (today - timedelta(days=1)).isoformat()
         assert since == (today - timedelta(days=30)).isoformat()
 
+    def test_last_3d(self) -> None:
+        """last_3d covers 3 days ending yesterday."""
+        since, until = resolve_date_preset("last_3d")
+        today = date.today()
+        assert until == (today - timedelta(days=1)).isoformat()
+        assert since == (today - timedelta(days=3)).isoformat()
+
+    def test_last_90d(self) -> None:
+        """last_90d covers 90 days ending yesterday."""
+        since, until = resolve_date_preset("last_90d")
+        today = date.today()
+        assert until == (today - timedelta(days=1)).isoformat()
+        assert since == (today - timedelta(days=90)).isoformat()
+
+    def test_this_year(self) -> None:
+        """this_year starts Jan 1 and ends today."""
+        since, until = resolve_date_preset("this_year")
+        today = date.today()
+        assert since == today.replace(month=1, day=1).isoformat()
+        assert until == today.isoformat()
+
+    def test_last_year(self) -> None:
+        """last_year covers entire previous calendar year."""
+        since, until = resolve_date_preset("last_year")
+        today = date.today()
+        assert since == f"{today.year - 1}-01-01"
+        assert until == f"{today.year - 1}-12-31"
+
+    def test_this_quarter(self) -> None:
+        """this_quarter starts at quarter beginning and ends today."""
+        since, until = resolve_date_preset("this_quarter")
+        today = date.today()
+        quarter_month = ((today.month - 1) // 3) * 3 + 1
+        assert since == today.replace(month=quarter_month, day=1).isoformat()
+        assert until == today.isoformat()
+
+    def test_last_quarter(self) -> None:
+        """last_quarter covers full previous quarter."""
+        since, until = resolve_date_preset("last_quarter")
+        today = date.today()
+        # Current quarter start
+        quarter_month = ((today.month - 1) // 3) * 3 + 1
+        this_q_start = today.replace(month=quarter_month, day=1)
+        # Previous quarter end = day before current quarter start
+        expected_until = (this_q_start - timedelta(days=1)).isoformat()
+        assert until == expected_until
+        # Previous quarter start
+        prev_q_start = this_q_start - timedelta(days=1)
+        prev_quarter_month = ((prev_q_start.month - 1) // 3) * 3 + 1
+        expected_since = prev_q_start.replace(
+            month=prev_quarter_month, day=1
+        ).isoformat()
+        assert since == expected_since
+
     def test_invalid_preset(self) -> None:
         """Unknown preset raises ValueError."""
         with pytest.raises(ValueError, match="Unknown date preset"):
@@ -139,7 +193,7 @@ class TestGetInsights:
             "since": "2026-03-01",
             "until": "2026-03-07",
         }
-        assert call_kwargs["date_preset"] is None
+        assert "date_preset" not in call_kwargs
 
     @pytest.mark.asyncio
     async def test_breakdowns_parsed(
@@ -471,13 +525,14 @@ class TestGetBreakdownReport:
             limit=10,
         )
 
-        mock_client.get_insights.assert_called_once_with(
-            account_id="act_123",
-            date_preset="last_7d",
-            level="campaign",
-            breakdowns=["gender"],
-            limit=10,
-        )
+        call_kwargs = mock_client.get_insights.call_args.kwargs
+        assert call_kwargs["account_id"] == "act_123"
+        assert call_kwargs["level"] == "campaign"
+        assert call_kwargs["breakdowns"] == ["gender"]
+        assert call_kwargs["limit"] == 10
+        assert "time_range" in call_kwargs
+        assert call_kwargs["time_range"]["since"] is not None
+        assert call_kwargs["time_range"]["until"] is not None
 
     @pytest.mark.asyncio
     async def test_error(self, mock_context: MagicMock, mock_client: AsyncMock) -> None:
