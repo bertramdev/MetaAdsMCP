@@ -570,7 +570,9 @@ def format_write_result(
     Returns:
         Formatted markdown string with header and entity detail.
     """
-    status_note = "PAUSED" if action == "Created" else ""
+    paused_types = {"Campaign", "Ad Set", "Ad"}
+    show_paused = action == "Created" and entity_type in paused_types
+    status_note = "PAUSED" if show_paused else ""
     header = f"> **{entity_type} {action}**"
     if status_note:
         header += f" | Status: {status_note}"

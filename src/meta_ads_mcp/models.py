@@ -495,7 +495,7 @@ class CustomAudienceModel(BaseModel):
     operation_status: dict[str, Any] = {}
     description: str = ""
     lookalike_spec: dict[str, Any] = {}
-    rule: str = ""
+    rule: dict[str, Any] = {}
     data_source: dict[str, Any] = {}
     retention_days: int = 0
     is_value_based: bool = False

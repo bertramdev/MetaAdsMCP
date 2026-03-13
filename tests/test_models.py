@@ -498,7 +498,7 @@ class TestCustomAudienceModel:
         """New v25 fields have sensible defaults."""
         model = CustomAudienceModel()
         assert model.lookalike_spec == {}
-        assert model.rule == ""
+        assert model.rule == {}
         assert model.data_source == {}
         assert model.retention_days == 0
         assert model.is_value_based is False
