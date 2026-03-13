@@ -23,6 +23,20 @@ from meta_ads_mcp.config import MetaAdsConfig
 
 logger = logging.getLogger(__name__)
 
+META_ERROR_HINTS: dict[int, str] = {
+    2: "Temporary issue with the Meta API. Try again in a few minutes.",
+    4: "Temporary issue with the Meta API. Try again in a few minutes.",
+    10: "Permission denied. Ensure the token has ads_read "
+    "and ads_management permissions.",
+    17: "Rate limit reached. Wait a few minutes and try again.",
+    32: "Rate limit reached. Wait a few minutes and try again.",
+    100: "Invalid parameter. Check the parameters and try again.",
+    190: "Access token has expired or is invalid. Generate a new token.",
+    200: "Permission denied. Ensure the token has ads_read "
+    "and ads_management permissions.",
+    613: "Rate limit reached. Wait a few minutes and try again.",
+}
+
 
 class MetaAdsError(Exception):
     """Exception for Meta Ads API errors.
@@ -43,6 +57,13 @@ class MetaAdsError(Exception):
         self.message = message
         self.error_code = error_code
         self.error_subcode = error_subcode
+
+    @property
+    def hint(self) -> str:
+        """Return an actionable hint for this error code, if available."""
+        if self.error_code is None:
+            return ""
+        return META_ERROR_HINTS.get(self.error_code, "")
 
 
 class MetaAdsClient:
@@ -137,6 +158,8 @@ class MetaAdsClient:
                 return [dict(acc) for acc in accounts]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -169,6 +192,8 @@ class MetaAdsClient:
                 return dict(account)
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -228,6 +253,8 @@ class MetaAdsClient:
                 return [dict(c) for c in itertools.islice(campaigns, limit)]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -270,6 +297,8 @@ class MetaAdsClient:
                 return dict(campaign)
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -336,6 +365,8 @@ class MetaAdsClient:
                 return [dict(a) for a in itertools.islice(ad_sets, limit)]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -381,6 +412,8 @@ class MetaAdsClient:
                 return dict(ad_set)
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -444,6 +477,8 @@ class MetaAdsClient:
                 return [dict(a) for a in itertools.islice(ads, limit)]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -481,6 +516,8 @@ class MetaAdsClient:
                 return dict(ad)
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -542,6 +579,8 @@ class MetaAdsClient:
                 return [dict(row) for row in itertools.islice(insights, limit)]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -584,6 +623,8 @@ class MetaAdsClient:
                 return [dict(c) for c in itertools.islice(creatives, limit)]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -620,6 +661,8 @@ class MetaAdsClient:
                 return dict(creative)
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -666,6 +709,8 @@ class MetaAdsClient:
                 return [dict(a) for a in itertools.islice(audiences, limit)]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -706,6 +751,8 @@ class MetaAdsClient:
                 return dict(audience)
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_fetch)
 
@@ -878,6 +925,8 @@ class MetaAdsClient:
                 return dict(result)
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_create)
 
@@ -947,6 +996,8 @@ class MetaAdsClient:
                 return dict(result) if result else {}
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_update)
 
@@ -1031,6 +1082,8 @@ class MetaAdsClient:
                 return dict(result)
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_create)
 
@@ -1108,6 +1161,8 @@ class MetaAdsClient:
                 return dict(result) if result else {}
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_update)
 
@@ -1150,6 +1205,8 @@ class MetaAdsClient:
                 return dict(result)
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_create)
 
@@ -1187,6 +1244,8 @@ class MetaAdsClient:
                 return dict(result) if result else {}
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
 
         return await asyncio.to_thread(_update)
 

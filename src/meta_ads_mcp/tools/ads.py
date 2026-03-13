@@ -55,7 +55,7 @@ async def list_ads(
         models = [AdModel(**d) for d in raw]
         return format_ad_list(models)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def get_ad(ctx: Context, ad_id: str) -> str:
@@ -73,7 +73,7 @@ async def get_ad(ctx: Context, ad_id: str) -> str:
         model = AdModel(**raw)
         return format_ad(model)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def create_ad(
@@ -117,7 +117,7 @@ async def create_ad(
         detail = format_ad(model)
         return format_write_result("Created", "Ad", detail, dry_run=dry_run)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def update_ad_status(

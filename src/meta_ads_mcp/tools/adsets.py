@@ -58,7 +58,7 @@ async def list_ad_sets(
         models = [AdSetModel(**d) for d in raw]
         return format_ad_set_list(models)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def get_ad_set(ctx: Context, ad_set_id: str) -> str:
@@ -76,7 +76,7 @@ async def get_ad_set(ctx: Context, ad_set_id: str) -> str:
         model = AdSetModel(**raw)
         return format_ad_set(model)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def create_ad_set(
