@@ -342,7 +342,7 @@ async def get_ad_set_diagnostics(ctx: Context, ad_set_id: str) -> str:
         learning = format_learning_stage(model.learning_stage_info)
         return base + "\n\n" + learning
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 def register(mcp: FastMCP) -> None:

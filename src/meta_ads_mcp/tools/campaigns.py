@@ -310,7 +310,7 @@ async def get_campaign_diagnostics(ctx: Context, campaign_id: str) -> str:
             "Campaign", model.name, model.issues_info, model.recommendations
         )
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 def register(mcp: FastMCP) -> None:
