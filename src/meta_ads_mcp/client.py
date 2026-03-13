@@ -5,6 +5,7 @@ synchronous SDK calls without blocking the event loop.
 """
 
 import asyncio
+import itertools
 import logging
 from typing import Any
 
@@ -218,7 +219,7 @@ class MetaAdsClient:
                     ],
                     params=params,
                 )
-                return [dict(c) for c in campaigns]
+                return [dict(c) for c in itertools.islice(campaigns, limit)]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
 
@@ -312,7 +313,7 @@ class MetaAdsClient:
                 else:
                     account = self._get_account(account_id)
                     ad_sets = account.get_ad_sets(fields=fields, params=params)
-                return [dict(a) for a in ad_sets]
+                return [dict(a) for a in itertools.islice(ad_sets, limit)]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
 
@@ -408,7 +409,7 @@ class MetaAdsClient:
                 else:
                     account = self._get_account(account_id)
                     ads = account.get_ads(fields=fields, params=params)
-                return [dict(a) for a in ads]
+                return [dict(a) for a in itertools.islice(ads, limit)]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
 
@@ -502,7 +503,7 @@ class MetaAdsClient:
                     fields=insight_fields,
                     params=params,
                 )
-                return [dict(row) for row in insights]
+                return [dict(row) for row in itertools.islice(insights, limit)]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
 
@@ -540,7 +541,7 @@ class MetaAdsClient:
                     ],
                     params={"limit": limit},
                 )
-                return [dict(c) for c in creatives]
+                return [dict(c) for c in itertools.islice(creatives, limit)]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
 
@@ -610,7 +611,7 @@ class MetaAdsClient:
                     ],
                     params={"limit": limit},
                 )
-                return [dict(a) for a in audiences]
+                return [dict(a) for a in itertools.islice(audiences, limit)]
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
 
