@@ -76,6 +76,30 @@ def parse_json_param(value: str, param_name: str) -> dict[str, Any]:
     return parsed
 
 
+def parse_json_list_param(value: str, param_name: str) -> list[dict[str, Any]]:
+    """Parse a JSON string parameter into a list of dictionaries.
+
+    Args:
+        value: JSON string to parse.
+        param_name: Parameter name for error messages.
+
+    Returns:
+        Parsed list of dictionaries.
+
+    Raises:
+        ValueError: If the string is not valid JSON or not a JSON array of objects.
+    """
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON for {param_name}: {e}")
+    if not isinstance(parsed, list):
+        raise ValueError(
+            f"{param_name} must be a JSON array, got {type(parsed).__name__}"
+        )
+    return parsed
+
+
 def cents_display(cents: int | str) -> str:
     """Format a cents value as a dollar string.
 

@@ -39,6 +39,9 @@ class TestCreateCampaign:
             start_time=None,
             stop_time=None,
             bid_strategy=None,
+            smart_promotion_type=None,
+            spend_cap=None,
+            budget_schedule_specs=None,
             dry_run=False,
         )
 

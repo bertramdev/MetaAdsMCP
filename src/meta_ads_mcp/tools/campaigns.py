@@ -1,16 +1,19 @@
 """Campaign management tools."""
 
+from typing import Any
+
 from mcp.server.fastmcp import Context, FastMCP
 
 from meta_ads_mcp.client import MetaAdsError
 from meta_ads_mcp.formatting import (
     format_campaign,
     format_campaign_list,
+    format_diagnostics,
     format_error,
     format_update_result,
     format_write_result,
 )
-from meta_ads_mcp.models import CampaignModel
+from meta_ads_mcp.models import CampaignDiagnosticsModel, CampaignModel
 from meta_ads_mcp.tools import get_client
 from meta_ads_mcp.tools._write_helpers import (
     cents_display,
@@ -18,6 +21,7 @@ from meta_ads_mcp.tools._write_helpers import (
     fetch_and_update,
     format_write_error,
     merge_updates,
+    parse_json_list_param,
     validate_status,
 )
 
@@ -78,6 +82,9 @@ async def create_campaign(
     start_time: str | None = None,
     stop_time: str | None = None,
     bid_strategy: str | None = None,
+    smart_promotion_type: str | None = None,
+    spend_cap: str | None = None,
+    budget_schedule_specs: str | None = None,
     dry_run: bool = False,
 ) -> str:
     """Create a new campaign (defaults to PAUSED).
@@ -96,6 +103,9 @@ async def create_campaign(
         start_time: Campaign start time in ISO 8601 format. Optional.
         stop_time: Campaign stop time in ISO 8601 format. Optional.
         bid_strategy: Bid strategy (e.g., LOWEST_COST_WITHOUT_CAP). Optional.
+        smart_promotion_type: Advantage+ type (e.g., GUIDED_CREATION). Optional.
+        spend_cap: Campaign spend cap in dollars (e.g., "500.00"). Optional.
+        budget_schedule_specs: Budget schedule as JSON string. Optional.
         dry_run: If True, validate without creating. Default False.
     """
     try:
@@ -103,10 +113,17 @@ async def create_campaign(
 
         daily_cents = dollars_to_cents(daily_budget) if daily_budget else None
         lifetime_cents = dollars_to_cents(lifetime_budget) if lifetime_budget else None
+        spend_cap_cents = dollars_to_cents(spend_cap) if spend_cap else None
 
         categories: list[str] | None = None
         if special_ad_categories:
             categories = [c.strip() for c in special_ad_categories.split(",")]
+
+        schedule_specs: list[dict[str, Any]] | None = None
+        if budget_schedule_specs:
+            schedule_specs = parse_json_list_param(
+                budget_schedule_specs, "budget_schedule_specs"
+            )
 
         raw = await client.create_campaign(
             name=name,
@@ -118,6 +135,9 @@ async def create_campaign(
             start_time=start_time,
             stop_time=stop_time,
             bid_strategy=bid_strategy,
+            smart_promotion_type=smart_promotion_type,
+            spend_cap=spend_cap_cents,
+            budget_schedule_specs=schedule_specs,
             dry_run=dry_run,
         )
 
@@ -147,6 +167,9 @@ async def update_campaign(
     start_time: str | None = None,
     stop_time: str | None = None,
     bid_strategy: str | None = None,
+    smart_promotion_type: str | None = None,
+    spend_cap: str | None = None,
+    budget_schedule_specs: str | None = None,
     dry_run: bool = False,
 ) -> str:
     """Update an existing campaign.
@@ -163,6 +186,9 @@ async def update_campaign(
         start_time: New start time in ISO 8601 format. Optional.
         stop_time: New stop time in ISO 8601 format. Optional.
         bid_strategy: New bid strategy. Optional.
+        smart_promotion_type: Advantage+ type (e.g., GUIDED_CREATION). Optional.
+        spend_cap: New campaign spend cap in dollars (e.g., "500.00"). Optional.
+        budget_schedule_specs: New budget schedule as JSON string. Optional.
         dry_run: If True, validate without updating. Default False.
     """
     try:
@@ -173,6 +199,13 @@ async def update_campaign(
 
         daily_cents = dollars_to_cents(daily_budget) if daily_budget else None
         lifetime_cents = dollars_to_cents(lifetime_budget) if lifetime_budget else None
+        spend_cap_cents = dollars_to_cents(spend_cap) if spend_cap else None
+
+        schedule_specs: list[dict[str, Any]] | None = None
+        if budget_schedule_specs:
+            schedule_specs = parse_json_list_param(
+                budget_schedule_specs, "budget_schedule_specs"
+            )
 
         # Fetch current state and apply update concurrently
         current = await fetch_and_update(
@@ -186,6 +219,9 @@ async def update_campaign(
                 start_time=start_time,
                 stop_time=stop_time,
                 bid_strategy=bid_strategy,
+                smart_promotion_type=smart_promotion_type,
+                spend_cap=spend_cap_cents,
+                budget_schedule_specs=schedule_specs,
                 dry_run=dry_run,
             ),
         )
@@ -221,6 +257,16 @@ async def update_campaign(
                 current.get("bid_strategy", "Not set"),
                 bid_strategy,
             )
+        if spend_cap_cents is not None:
+            changes["Spend Cap"] = (
+                cents_display(current.get("spend_cap", "0") or "0"),
+                cents_display(spend_cap_cents),
+            )
+        if smart_promotion_type is not None:
+            changes["Smart Promotion Type"] = (
+                current.get("smart_promotion_type", "Not set"),
+                smart_promotion_type,
+            )
 
         model = CampaignModel(
             **merge_updates(
@@ -247,6 +293,26 @@ async def update_campaign(
         return format_write_error(e)
 
 
+async def get_campaign_diagnostics(ctx: Context, campaign_id: str) -> str:
+    """Get diagnostic issues and recommendations for a campaign.
+
+    Shows delivery issues with severity levels and Meta's optimization
+    recommendations. Use this to troubleshoot poor campaign performance.
+
+    Args:
+        campaign_id: The campaign ID.
+    """
+    try:
+        client = get_client(ctx)
+        raw = await client.get_campaign_diagnostics(campaign_id)
+        model = CampaignDiagnosticsModel(**raw)
+        return format_diagnostics(
+            "Campaign", model.name, model.issues_info, model.recommendations
+        )
+    except MetaAdsError as e:
+        return format_error(e.message)
+
+
 def register(mcp: FastMCP) -> None:
     """Register campaign tools with the MCP server.
 
@@ -257,3 +323,4 @@ def register(mcp: FastMCP) -> None:
     mcp.tool()(get_campaign)
     mcp.tool()(create_campaign)
     mcp.tool()(update_campaign)
+    mcp.tool()(get_campaign_diagnostics)

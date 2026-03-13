@@ -3,6 +3,8 @@
 All functions return formatted markdown strings suitable for LLM output.
 """
 
+from typing import Any
+
 from meta_ads_mcp.models import (
     AdAccountModel,
     AdCreativeModel,
@@ -69,15 +71,22 @@ def format_campaign(campaign: CampaignModel) -> str:
     Returns:
         Formatted markdown string.
     """
+    categories = campaign.special_ad_categories
+    categories_str = ", ".join(categories) if categories else "None"
     return f"""## Campaign: {campaign.name}
 
 - **ID**: {campaign.id}
 - **Status**: {campaign.status}
 - **Effective Status**: {campaign.effective_status}
+- **Configured Status**: {campaign.configured_status or 'N/A'}
 - **Objective**: {campaign.objective}
+- **Buying Type**: {campaign.buying_type or 'AUCTION'}
+- **Bid Strategy**: {campaign.bid_strategy or 'Not set'}
 - **Daily Budget**: {campaign.daily_budget_formatted}
 - **Lifetime Budget**: {campaign.lifetime_budget_formatted}
 - **Budget Remaining**: {campaign.budget_remaining_formatted}
+- **Spend Cap**: {campaign.spend_cap_formatted}
+- **Special Ad Categories**: {categories_str}
 - **Start Time**: {campaign.start_time or 'Not set'}
 - **Stop Time**: {campaign.stop_time or 'Not set'}
 - **Created**: {campaign.created_time}
@@ -128,8 +137,13 @@ def format_ad_set(ad_set: AdSetModel) -> str:
 - **Daily Budget**: {ad_set.daily_budget_formatted}
 - **Lifetime Budget**: {ad_set.lifetime_budget_formatted}
 - **Budget Remaining**: {ad_set.budget_remaining_formatted}
+- **Bid Strategy**: {ad_set.bid_strategy or 'Not set'}
+- **Bid Amount**: {ad_set.bid_amount_formatted}
 - **Billing Event**: {ad_set.billing_event}
 - **Optimization Goal**: {ad_set.optimization_goal}
+- **Destination Type**: {ad_set.destination_type or 'N/A'}
+- **Frequency Cap**: {ad_set.frequency_cap_summary}
+- **Dynamic Creative**: {'Yes' if ad_set.is_dynamic_creative else 'No'}
 - **Targeting**: {ad_set.targeting_summary}
 - **Start Time**: {ad_set.start_time or 'Not set'}
 - **End Time**: {ad_set.end_time or 'Not set'}"""
@@ -170,16 +184,20 @@ def format_ad(ad: AdModel) -> str:
     Returns:
         Formatted markdown string.
     """
-    return f"""## Ad: {ad.name}
-
-- **ID**: {ad.id}
-- **Status**: {ad.status}
-- **Effective Status**: {ad.effective_status}
-- **Ad Set ID**: {ad.adset_id}
-- **Campaign ID**: {ad.campaign_id}
-- **Creative ID**: {ad.creative_id}
-- **Created**: {ad.created_time}
-- **Updated**: {ad.updated_time}"""
+    lines = [f"## Ad: {ad.name}", ""]
+    lines.append(f"- **ID**: {ad.id}")
+    lines.append(f"- **Status**: {ad.status}")
+    lines.append(f"- **Effective Status**: {ad.effective_status}")
+    if ad.configured_status:
+        lines.append(f"- **Configured Status**: {ad.configured_status}")
+    lines.append(f"- **Ad Set ID**: {ad.adset_id}")
+    lines.append(f"- **Campaign ID**: {ad.campaign_id}")
+    lines.append(f"- **Creative ID**: {ad.creative_id}")
+    if ad.preview_shareable_link:
+        lines.append(f"- **Preview Link**: {ad.preview_shareable_link}")
+    lines.append(f"- **Created**: {ad.created_time}")
+    lines.append(f"- **Updated**: {ad.updated_time}")
+    return "\n".join(lines)
 
 
 def format_ad_list(ads: list[AdModel]) -> str:
@@ -217,15 +235,23 @@ def format_creative(creative: AdCreativeModel) -> str:
     Returns:
         Formatted markdown string.
     """
-    return f"""## Creative: {creative.name}
-
-- **ID**: {creative.id}
-- **Title**: {creative.title or 'Not set'}
-- **Body**: {creative.body or 'Not set'}
-- **CTA**: {creative.call_to_action_type or 'Not set'}
-- **Link URL**: {creative.link_url or 'Not set'}
-- **Image URL**: {creative.image_url or 'Not set'}
-- **Thumbnail URL**: {creative.thumbnail_url or 'Not set'}"""
+    lines = [f"## Creative: {creative.name}", ""]
+    lines.append(f"- **ID**: {creative.id}")
+    if creative.status:
+        lines.append(f"- **Status**: {creative.status}")
+    lines.append(f"- **Title**: {creative.title or 'Not set'}")
+    lines.append(f"- **Body**: {creative.body or 'Not set'}")
+    lines.append(f"- **CTA**: {creative.call_to_action_type or 'Not set'}")
+    lines.append(f"- **Link URL**: {creative.link_url or 'Not set'}")
+    lines.append(f"- **Image URL**: {creative.image_url or 'Not set'}")
+    if creative.image_hash:
+        lines.append(f"- **Image Hash**: {creative.image_hash}")
+    lines.append(f"- **Thumbnail URL**: {creative.thumbnail_url or 'Not set'}")
+    if creative.url_tags:
+        lines.append(f"- **URL Tags**: {creative.url_tags}")
+    if creative.object_story_spec:
+        lines.append(f"- **Object Story**: {creative.object_story_summary}")
+    return "\n".join(lines)
 
 
 def format_creative_list(creatives: list[AdCreativeModel]) -> str:
@@ -355,14 +381,28 @@ def format_audience(audience: CustomAudienceModel) -> str:
     delivery = audience.delivery_status.get("status", "Unknown")
     operation = audience.operation_status.get("status", "Unknown")
 
-    return f"""## Audience: {audience.name}
-
-- **ID**: {audience.id}
-- **Subtype**: {audience.subtype}
-- **Size**: {audience.size_display}
-- **Delivery Status**: {delivery}
-- **Operation Status**: {operation}
-- **Description**: {audience.description or 'No description'}"""
+    lines = [f"## Audience: {audience.name}", ""]
+    lines.append(f"- **ID**: {audience.id}")
+    lines.append(f"- **Subtype**: {audience.subtype}")
+    lines.append(f"- **Size**: {audience.size_display}")
+    lines.append(f"- **Delivery Status**: {delivery}")
+    lines.append(f"- **Operation Status**: {operation}")
+    lines.append(f"- **Description**: {audience.description or 'No description'}")
+    if audience.retention_days:
+        lines.append(f"- **Retention Days**: {audience.retention_days}")
+    if audience.is_value_based:
+        lines.append("- **Value-Based**: Yes")
+    if audience.sharing_status:
+        lines.append(f"- **Sharing Status**: {audience.sharing_status}")
+    if audience.lookalike_spec:
+        lines.append(f"- **Lookalike**: {audience.lookalike_summary}")
+    if audience.data_source:
+        lines.append(f"- **Data Source**: {audience.data_source_summary}")
+    if audience.time_created:
+        lines.append(f"- **Created**: {audience.time_created}")
+    if audience.time_updated:
+        lines.append(f"- **Updated**: {audience.time_updated}")
+    return "\n".join(lines)
 
 
 def format_audience_list(audiences: list[CustomAudienceModel]) -> str:
@@ -592,3 +632,113 @@ def format_error(message: str) -> str:
         Formatted markdown error string.
     """
     return f"## Error\n\n{message}"
+
+
+def format_diagnostics(
+    entity_type: str,
+    name: str,
+    issues: list[dict[str, Any]],
+    recommendations: list[dict[str, Any]],
+) -> str:
+    """Format diagnostic issues and recommendations as markdown.
+
+    Args:
+        entity_type: The entity type (e.g., "Campaign", "Ad Set", "Ad").
+        name: The entity name.
+        issues: List of issue dictionaries with level and summary keys.
+        recommendations: List of recommendation dictionaries.
+
+    Returns:
+        Formatted markdown string with issues and recommendations.
+    """
+    lines = [f"## {entity_type} Diagnostics: {name}", ""]
+
+    lines.append("### Issues")
+    if not issues:
+        lines.append("No issues found.")
+    else:
+        for issue in issues:
+            level = issue.get("level", "unknown")
+            summary = issue.get("summary", "No summary")
+            lines.append(f"- **[{level.upper()}]** {summary}")
+    lines.append("")
+
+    lines.append("### Recommendations")
+    if not recommendations:
+        lines.append("No recommendations.")
+    else:
+        for rec in recommendations:
+            title = rec.get("title", "")
+            message = rec.get("message", "No details")
+            if title:
+                lines.append(f"- **{title}**: {message}")
+            else:
+                lines.append(f"- {message}")
+
+    return "\n".join(lines)
+
+
+def format_learning_stage(info: dict[str, Any]) -> str:
+    """Format learning stage info as a markdown section.
+
+    Args:
+        info: Learning stage info dictionary with status key.
+
+    Returns:
+        Formatted markdown section for learning stage.
+    """
+    if not info:
+        return "### Learning Stage\n\nNo learning stage data available."
+
+    status = info.get("status", "UNKNOWN")
+    status_display = {
+        "LEARNING": "Learning (gathering data)",
+        "SUCCESS": "Learning Complete (exited learning)",
+        "LEARNING_LIMITED": "Learning Limited (not enough conversions)",
+    }
+    display = status_display.get(status, status)
+
+    lines = ["### Learning Stage", "", f"- **Status**: {display}"]
+    if "info" in info:
+        lines.append(f"- **Info**: {info['info']}")
+    return "\n".join(lines)
+
+
+def format_ad_review_feedback(feedback: dict[str, Any]) -> str:
+    """Format ad review feedback as a markdown section.
+
+    Args:
+        feedback: Ad review feedback dictionary.
+
+    Returns:
+        Formatted markdown section for ad review.
+    """
+    if not feedback:
+        return "### Ad Review\n\nNo review feedback available."
+
+    lines = ["### Ad Review", ""]
+    for key, value in feedback.items():
+        lines.append(f"- **{key}**: {value}")
+    return "\n".join(lines)
+
+
+def format_delivery_checks(checks: list[dict[str, Any]]) -> str:
+    """Format failed delivery checks as a markdown section.
+
+    Args:
+        checks: List of failed delivery check dictionaries.
+
+    Returns:
+        Formatted markdown section for delivery checks.
+    """
+    if not checks:
+        return "### Delivery Checks\n\nAll delivery checks passed."
+
+    lines = ["### Delivery Checks", ""]
+    for check in checks:
+        check_name = check.get("summary", "Unknown check")
+        description = check.get("description", "")
+        lines.append(f"- **{check_name}**")
+        if description:
+            lines.append(f"  {description}")
+    return "\n".join(lines)

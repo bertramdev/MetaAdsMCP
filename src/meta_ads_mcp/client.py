@@ -216,6 +216,12 @@ class MetaAdsClient:
                         Campaign.Field.stop_time,
                         Campaign.Field.created_time,
                         Campaign.Field.updated_time,
+                        Campaign.Field.bid_strategy,
+                        Campaign.Field.spend_cap,
+                        Campaign.Field.pacing_type,
+                        Campaign.Field.buying_type,
+                        Campaign.Field.special_ad_categories,
+                        Campaign.Field.configured_status,
                     ],
                     params=params,
                 )
@@ -253,6 +259,12 @@ class MetaAdsClient:
                         Campaign.Field.stop_time,
                         Campaign.Field.created_time,
                         Campaign.Field.updated_time,
+                        Campaign.Field.bid_strategy,
+                        Campaign.Field.spend_cap,
+                        Campaign.Field.pacing_type,
+                        Campaign.Field.buying_type,
+                        Campaign.Field.special_ad_categories,
+                        Campaign.Field.configured_status,
                     ]
                 )
                 return dict(campaign)
@@ -297,6 +309,14 @@ class MetaAdsClient:
                     AdSet.Field.targeting,
                     AdSet.Field.start_time,
                     AdSet.Field.end_time,
+                    AdSet.Field.bid_amount,
+                    AdSet.Field.bid_strategy,
+                    AdSet.Field.destination_type,
+                    AdSet.Field.frequency_control_specs,
+                    AdSet.Field.attribution_spec,
+                    AdSet.Field.is_dynamic_creative,
+                    AdSet.Field.optimization_sub_event,
+                    AdSet.Field.pacing_type,
                 ]
                 params: dict[str, Any] = {"limit": limit}
                 if status_filter:
@@ -348,6 +368,14 @@ class MetaAdsClient:
                         AdSet.Field.targeting,
                         AdSet.Field.start_time,
                         AdSet.Field.end_time,
+                        AdSet.Field.bid_amount,
+                        AdSet.Field.bid_strategy,
+                        AdSet.Field.destination_type,
+                        AdSet.Field.frequency_control_specs,
+                        AdSet.Field.attribution_spec,
+                        AdSet.Field.is_dynamic_creative,
+                        AdSet.Field.optimization_sub_event,
+                        AdSet.Field.pacing_type,
                     ]
                 )
                 return dict(ad_set)
@@ -390,6 +418,10 @@ class MetaAdsClient:
                     Ad.Field.creative,
                     Ad.Field.created_time,
                     Ad.Field.updated_time,
+                    Ad.Field.configured_status,
+                    Ad.Field.tracking_specs,
+                    Ad.Field.conversion_specs,
+                    Ad.Field.preview_shareable_link,
                 ]
                 params: dict[str, Any] = {"limit": limit}
                 if status_filter:
@@ -440,6 +472,10 @@ class MetaAdsClient:
                         Ad.Field.creative,
                         Ad.Field.created_time,
                         Ad.Field.updated_time,
+                        Ad.Field.configured_status,
+                        Ad.Field.tracking_specs,
+                        Ad.Field.conversion_specs,
+                        Ad.Field.preview_shareable_link,
                     ]
                 )
                 return dict(ad)
@@ -538,6 +574,10 @@ class MetaAdsClient:
                         AdCreative.Field.thumbnail_url,
                         AdCreative.Field.call_to_action_type,
                         AdCreative.Field.link_url,
+                        AdCreative.Field.status,
+                        AdCreative.Field.object_story_spec,
+                        AdCreative.Field.url_tags,
+                        AdCreative.Field.image_hash,
                     ],
                     params={"limit": limit},
                 )
@@ -571,6 +611,10 @@ class MetaAdsClient:
                         AdCreative.Field.thumbnail_url,
                         AdCreative.Field.call_to_action_type,
                         AdCreative.Field.link_url,
+                        AdCreative.Field.status,
+                        AdCreative.Field.object_story_spec,
+                        AdCreative.Field.url_tags,
+                        AdCreative.Field.image_hash,
                     ]
                 )
                 return dict(creative)
@@ -608,6 +652,14 @@ class MetaAdsClient:
                         CustomAudience.Field.delivery_status,
                         CustomAudience.Field.operation_status,
                         CustomAudience.Field.description,
+                        CustomAudience.Field.lookalike_spec,
+                        CustomAudience.Field.rule,
+                        CustomAudience.Field.data_source,
+                        CustomAudience.Field.retention_days,
+                        CustomAudience.Field.is_value_based,
+                        CustomAudience.Field.sharing_status,
+                        CustomAudience.Field.time_created,
+                        CustomAudience.Field.time_updated,
                     ],
                     params={"limit": limit},
                 )
@@ -641,9 +693,111 @@ class MetaAdsClient:
                         CustomAudience.Field.delivery_status,
                         CustomAudience.Field.operation_status,
                         CustomAudience.Field.description,
+                        CustomAudience.Field.lookalike_spec,
+                        CustomAudience.Field.rule,
+                        CustomAudience.Field.data_source,
+                        CustomAudience.Field.retention_days,
+                        CustomAudience.Field.is_value_based,
+                        CustomAudience.Field.sharing_status,
+                        CustomAudience.Field.time_created,
+                        CustomAudience.Field.time_updated,
                     ]
                 )
                 return dict(audience)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_fetch)
+
+    # ------------------------------------------------------------------
+    # Diagnostic methods
+    # ------------------------------------------------------------------
+
+    async def get_campaign_diagnostics(self, campaign_id: str) -> dict[str, Any]:
+        """Get diagnostic info for a campaign.
+
+        Args:
+            campaign_id: The campaign ID.
+
+        Returns:
+            Campaign diagnostic data dictionary.
+        """
+        self._ensure_initialized()
+
+        def _fetch() -> dict[str, Any]:
+            try:
+                campaign = Campaign(campaign_id)
+                campaign.api_get(
+                    fields=[
+                        Campaign.Field.id,
+                        Campaign.Field.name,
+                        Campaign.Field.status,
+                        Campaign.Field.issues_info,
+                        Campaign.Field.recommendations,
+                    ]
+                )
+                return dict(campaign)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_fetch)
+
+    async def get_ad_set_diagnostics(self, ad_set_id: str) -> dict[str, Any]:
+        """Get diagnostic info for an ad set.
+
+        Args:
+            ad_set_id: The ad set ID.
+
+        Returns:
+            Ad set diagnostic data dictionary.
+        """
+        self._ensure_initialized()
+
+        def _fetch() -> dict[str, Any]:
+            try:
+                ad_set = AdSet(ad_set_id)
+                ad_set.api_get(
+                    fields=[
+                        AdSet.Field.id,
+                        AdSet.Field.name,
+                        AdSet.Field.status,
+                        AdSet.Field.issues_info,
+                        AdSet.Field.recommendations,
+                        AdSet.Field.learning_stage_info,
+                    ]
+                )
+                return dict(ad_set)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_fetch)
+
+    async def get_ad_diagnostics(self, ad_id: str) -> dict[str, Any]:
+        """Get diagnostic info for an ad.
+
+        Args:
+            ad_id: The ad ID.
+
+        Returns:
+            Ad diagnostic data dictionary.
+        """
+        self._ensure_initialized()
+
+        def _fetch() -> dict[str, Any]:
+            try:
+                ad = Ad(ad_id)
+                ad.api_get(
+                    fields=[
+                        Ad.Field.id,
+                        Ad.Field.name,
+                        Ad.Field.status,
+                        Ad.Field.ad_review_feedback,
+                        Ad.Field.failed_delivery_checks,
+                        Ad.Field.issues_info,
+                        Ad.Field.recommendations,
+                    ]
+                )
+                return dict(ad)
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
 
@@ -665,6 +819,9 @@ class MetaAdsClient:
         start_time: str | None = None,
         stop_time: str | None = None,
         bid_strategy: str | None = None,
+        smart_promotion_type: str | None = None,
+        spend_cap: int | None = None,
+        budget_schedule_specs: list[dict[str, Any]] | None = None,
         dry_run: bool = False,
     ) -> dict[str, Any]:
         """Create a new campaign.
@@ -680,6 +837,9 @@ class MetaAdsClient:
             start_time: Campaign start time (ISO 8601).
             stop_time: Campaign stop time (ISO 8601).
             bid_strategy: Bid strategy (e.g., LOWEST_COST_WITHOUT_CAP).
+            smart_promotion_type: Advantage+ type (e.g., GUIDED_CREATION).
+            spend_cap: Campaign spend cap in cents.
+            budget_schedule_specs: Budget schedule specifications.
             dry_run: If True, validate only without creating.
 
         Returns:
@@ -706,6 +866,12 @@ class MetaAdsClient:
                     params["stop_time"] = stop_time
                 if bid_strategy:
                     params["bid_strategy"] = bid_strategy
+                if smart_promotion_type:
+                    params["smart_promotion_type"] = smart_promotion_type
+                if spend_cap is not None:
+                    params["spend_cap"] = spend_cap
+                if budget_schedule_specs:
+                    params["budget_schedule_specs"] = budget_schedule_specs
                 if dry_run:
                     params["execution_options"] = ["validate_only"]
                 result = account.create_campaign(params=params)
@@ -725,6 +891,9 @@ class MetaAdsClient:
         start_time: str | None = None,
         stop_time: str | None = None,
         bid_strategy: str | None = None,
+        smart_promotion_type: str | None = None,
+        spend_cap: int | None = None,
+        budget_schedule_specs: list[dict[str, Any]] | None = None,
         dry_run: bool = False,
     ) -> dict[str, Any]:
         """Update an existing campaign.
@@ -738,6 +907,9 @@ class MetaAdsClient:
             start_time: New start time (ISO 8601).
             stop_time: New stop time (ISO 8601).
             bid_strategy: New bid strategy.
+            smart_promotion_type: Advantage+ type (e.g., GUIDED_CREATION).
+            spend_cap: New campaign spend cap in cents.
+            budget_schedule_specs: New budget schedule specifications.
             dry_run: If True, validate only without updating.
 
         Returns:
@@ -763,6 +935,12 @@ class MetaAdsClient:
                     params["stop_time"] = stop_time
                 if bid_strategy is not None:
                     params["bid_strategy"] = bid_strategy
+                if smart_promotion_type:
+                    params["smart_promotion_type"] = smart_promotion_type
+                if spend_cap is not None:
+                    params["spend_cap"] = spend_cap
+                if budget_schedule_specs:
+                    params["budget_schedule_specs"] = budget_schedule_specs
                 if dry_run:
                     params["execution_options"] = ["validate_only"]
                 result = campaign.api_update(params=params)
@@ -788,6 +966,8 @@ class MetaAdsClient:
         start_time: str | None = None,
         end_time: str | None = None,
         promoted_object: dict[str, Any] | None = None,
+        frequency_control_specs: list[dict[str, Any]] | None = None,
+        attribution_spec: list[dict[str, Any]] | None = None,
         dry_run: bool = False,
     ) -> dict[str, Any]:
         """Create a new ad set.
@@ -807,6 +987,8 @@ class MetaAdsClient:
             start_time: Start time (ISO 8601).
             end_time: End time (ISO 8601).
             promoted_object: Promoted object dictionary.
+            frequency_control_specs: Frequency cap specifications.
+            attribution_spec: Attribution window specifications.
             dry_run: If True, validate only without creating.
 
         Returns:
@@ -839,6 +1021,10 @@ class MetaAdsClient:
                     params["end_time"] = end_time
                 if promoted_object:
                     params["promoted_object"] = promoted_object
+                if frequency_control_specs:
+                    params["frequency_control_specs"] = frequency_control_specs
+                if attribution_spec:
+                    params["attribution_spec"] = attribution_spec
                 if dry_run:
                     params["execution_options"] = ["validate_only"]
                 result = account.create_ad_set(params=params)
@@ -861,6 +1047,8 @@ class MetaAdsClient:
         start_time: str | None = None,
         end_time: str | None = None,
         optimization_goal: str | None = None,
+        frequency_control_specs: list[dict[str, Any]] | None = None,
+        attribution_spec: list[dict[str, Any]] | None = None,
         dry_run: bool = False,
     ) -> dict[str, Any]:
         """Update an existing ad set.
@@ -877,6 +1065,8 @@ class MetaAdsClient:
             start_time: New start time (ISO 8601).
             end_time: New end time (ISO 8601).
             optimization_goal: New optimization goal.
+            frequency_control_specs: New frequency cap specifications.
+            attribution_spec: New attribution window specifications.
             dry_run: If True, validate only without updating.
 
         Returns:
@@ -908,6 +1098,10 @@ class MetaAdsClient:
                     params["end_time"] = end_time
                 if optimization_goal is not None:
                     params["optimization_goal"] = optimization_goal
+                if frequency_control_specs:
+                    params["frequency_control_specs"] = frequency_control_specs
+                if attribution_spec:
+                    params["attribution_spec"] = attribution_spec
                 if dry_run:
                     params["execution_options"] = ["validate_only"]
                 result = ad_set.api_update(params=params)
@@ -995,3 +1189,195 @@ class MetaAdsClient:
                 raise self._handle_api_error(e) from e
 
         return await asyncio.to_thread(_update)
+
+    async def create_ad_creative(
+        self,
+        name: str,
+        object_story_spec: dict[str, Any],
+        account_id: str | None = None,
+        url_tags: str | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Create a new ad creative.
+
+        Args:
+            name: Creative name.
+            object_story_spec: Object story specification dictionary.
+            account_id: Ad account ID, or None for default.
+            url_tags: URL tags for tracking.
+            dry_run: If True, validate only without creating.
+
+        Returns:
+            Created creative data dictionary.
+        """
+        self._ensure_initialized()
+
+        def _create() -> dict[str, Any]:
+            try:
+                account = self._get_account(account_id)
+                params: dict[str, Any] = {
+                    "name": name,
+                    "object_story_spec": object_story_spec,
+                }
+                if url_tags:
+                    params["url_tags"] = url_tags
+                if dry_run:
+                    params["execution_options"] = ["validate_only"]
+                result = account.create_ad_creative(params=params)
+                return dict(result)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_create)
+
+    async def update_ad_creative(
+        self,
+        creative_id: str,
+        name: str | None = None,
+        url_tags: str | None = None,
+        status: str | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Update an existing ad creative.
+
+        Note: Meta does not allow updating object_story_spec on existing creatives.
+
+        Args:
+            creative_id: The creative ID to update.
+            name: New creative name.
+            url_tags: New URL tags.
+            status: New status.
+            dry_run: If True, validate only without updating.
+
+        Returns:
+            Update result dictionary.
+        """
+        self._ensure_initialized()
+
+        def _update() -> dict[str, Any]:
+            try:
+                creative = AdCreative(creative_id)
+                params: dict[str, Any] = {}
+                if name is not None:
+                    params["name"] = name
+                if url_tags is not None:
+                    params["url_tags"] = url_tags
+                if status is not None:
+                    params["status"] = status
+                if dry_run:
+                    params["execution_options"] = ["validate_only"]
+                result = creative.api_update(params=params)
+                return dict(result) if result else {}
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_update)
+
+    async def create_custom_audience(
+        self,
+        name: str,
+        subtype: str,
+        account_id: str | None = None,
+        description: str | None = None,
+        rule: dict[str, Any] | None = None,
+        pixel_id: str | None = None,
+        retention_days: int | None = None,
+        customer_file_source: str | None = None,
+        prefill: bool | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Create a new custom audience.
+
+        Args:
+            name: Audience name.
+            subtype: Audience subtype (CUSTOM, WEBSITE, APP).
+            account_id: Ad account ID, or None for default.
+            description: Audience description.
+            rule: Audience rule dictionary.
+            pixel_id: Pixel ID for website audiences.
+            retention_days: Number of days to retain audience members.
+            customer_file_source: Source for customer file audiences.
+            prefill: Whether to prefill the audience with existing data.
+            dry_run: If True, validate only without creating.
+
+        Returns:
+            Created audience data dictionary.
+        """
+        self._ensure_initialized()
+
+        def _create() -> dict[str, Any]:
+            try:
+                account = self._get_account(account_id)
+                params: dict[str, Any] = {
+                    "name": name,
+                    "subtype": subtype,
+                }
+                if description:
+                    params["description"] = description
+                if rule:
+                    params["rule"] = rule
+                if pixel_id:
+                    params["pixel_id"] = pixel_id
+                if retention_days is not None:
+                    params["retention_days"] = retention_days
+                if customer_file_source:
+                    params["customer_file_source"] = customer_file_source
+                if prefill is not None:
+                    params["prefill"] = prefill
+                if dry_run:
+                    params["execution_options"] = ["validate_only"]
+                result = account.create_custom_audience(params=params)
+                return dict(result)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_create)
+
+    async def create_lookalike_audience(
+        self,
+        name: str,
+        origin_audience_id: str,
+        country: str,
+        ratio: float,
+        account_id: str | None = None,
+        description: str | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Create a new lookalike audience.
+
+        Args:
+            name: Audience name.
+            origin_audience_id: Source audience ID.
+            country: Target country code (e.g., "US").
+            ratio: Lookalike ratio (0.01-0.20, where 0.01=1%).
+            account_id: Ad account ID, or None for default.
+            description: Audience description.
+            dry_run: If True, validate only without creating.
+
+        Returns:
+            Created audience data dictionary.
+        """
+        self._ensure_initialized()
+
+        def _create() -> dict[str, Any]:
+            try:
+                account = self._get_account(account_id)
+                params: dict[str, Any] = {
+                    "name": name,
+                    "subtype": "LOOKALIKE",
+                    "lookalike_spec": {
+                        "origin_audience_id": origin_audience_id,
+                        "country": country,
+                        "ratio": ratio,
+                    },
+                }
+                if description:
+                    params["description"] = description
+                if dry_run:
+                    params["execution_options"] = ["validate_only"]
+                result = account.create_custom_audience(params=params)
+                return dict(result)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+
+        return await asyncio.to_thread(_create)
