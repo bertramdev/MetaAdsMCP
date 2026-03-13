@@ -60,7 +60,7 @@ class TestMetaAdsConfig:
             config = MetaAdsConfig.from_env()
 
         assert config.default_account_id is None
-        assert config.api_version == "v21.0"
+        assert config.api_version == "v25.0"
 
     def test_frozen(self) -> None:
         """Config is immutable."""

@@ -24,7 +24,7 @@ class MetaAdsConfig:
     app_id: str
     app_secret: str
     default_account_id: str | None = None
-    api_version: str = "v21.0"
+    api_version: str = "v25.0"
 
     @classmethod
     def from_env(cls) -> "MetaAdsConfig":
@@ -44,7 +44,7 @@ class MetaAdsConfig:
                 decouple_config("META_DEFAULT_AD_ACCOUNT_ID", default="")
             )
             or None,
-            api_version=str(decouple_config("META_API_VERSION", default="v21.0")),
+            api_version=str(decouple_config("META_API_VERSION", default="v25.0")),
         )
 
     def resolve_account_id(self, account_id: str | None = None) -> str:

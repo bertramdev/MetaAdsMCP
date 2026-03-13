@@ -93,7 +93,7 @@ class TestClientInitialization:
                 app_id="test_app_id",
                 app_secret="test_app_secret",
                 access_token="test_token_12345678",
-                api_version="v21.0",
+                api_version="v25.0",
             )
         assert c._api is not None
 

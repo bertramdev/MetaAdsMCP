@@ -56,7 +56,7 @@ Environment variables (loaded via `python-decouple`):
 | `META_APP_ID` | Yes | Meta App ID |
 | `META_APP_SECRET` | Yes | Meta App Secret |
 | `META_DEFAULT_AD_ACCOUNT_ID` | No | Default ad account (with `act_` prefix) |
-| `META_API_VERSION` | No | API version (default: `v21.0`) |
+| `META_API_VERSION` | No | API version (default: `v25.0`) |
 
 **Never log or expose tokens in output.**
 
