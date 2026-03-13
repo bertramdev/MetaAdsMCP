@@ -177,7 +177,7 @@ async def get_ad_diagnostics(ctx: Context, ad_id: str) -> str:
         checks = format_delivery_checks(model.failed_delivery_checks)
         return base + "\n\n" + review + "\n\n" + checks
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 def register(mcp: FastMCP) -> None:
