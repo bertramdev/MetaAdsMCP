@@ -67,6 +67,34 @@ GitHub Project: [Meta Ads MCP](https://github.com/users/tomleelong/projects/2)
 - [x] #31 `update_ad_status` — pause/activate/archive
 - [x] #32 Unit tests for all write tools
 
+## Phase 5: SDK v25 Features
+
+### Diagnostics
+- [x] #42 `get_campaign_diagnostics` — campaign-level diagnostic scores
+- [x] #43 `get_ad_set_diagnostics` — ad set quality/engagement/conversion scores
+- [x] #44 `get_ad_diagnostics` — ad relevance diagnostics
+
+### Enriched Models
+- [x] #45 Enrich `CampaignModel` with v25 fields (smart_promotion_type, budget_schedule_specs, etc.)
+- [x] #46 Enrich `AdSetModel` with v25 fields (frequency_control_specs, attribution_spec, etc.)
+- [x] #47 Enrich `AdModel` with v25 fields (conversion_specs, tracking_specs, etc.)
+- [x] #48 Enrich `AdCreativeModel` with v25 fields (asset_feed_spec, degrees_of_freedom_spec, etc.)
+- [x] #49 Enrich `CustomAudienceModel` with v25 fields (rule, data_source, retention_days, etc.)
+
+### Creative Write Tools
+- [x] #50 `create_ad_creative` — create ad creative with dry_run support
+- [x] #51 `update_ad_creative` — update creative fields
+
+### Advanced Features
+- [x] #52 Advantage+ campaign support (smart_promotion_type, spend_cap)
+- [x] #53 Frequency capping (frequency_control_specs on ad sets)
+- [x] #54 Attribution spec support on ad sets
+
+### Audience Creation Tools
+- [x] #55 `create_custom_audience` — website/app/customer file audiences
+- [x] #56 `create_lookalike_audience` — lookalike from source audience
+- [x] #57 Unit tests for all Phase 5 tools and models
+
 ## Phase 4: Polish
 
 - [ ] #33 Comprehensive error handling for Meta API errors (rate limits, permissions, invalid params)
@@ -78,10 +106,8 @@ GitHub Project: [Meta Ads MCP](https://github.com/users/tomleelong/projects/2)
 ## Backlog / Future
 
 - [ ] #40 Persistent Meta access token — long-lived token exchange and refresh
-- [ ] Creative upload tools
-- [ ] Audience creation (custom, lookalike)
+- [ ] Creative upload tools (image/video asset upload)
 - [ ] Bulk operations (batch status changes, batch budget updates)
 - [ ] Trend analysis / ROAS tracking tools
-- [ ] Advantage+ campaign support
 - [ ] SSE transport for remote hosting
 - [ ] Automated reporting (scheduled insight summaries)

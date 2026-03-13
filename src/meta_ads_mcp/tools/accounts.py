@@ -19,7 +19,7 @@ async def get_ad_accounts(ctx: Context) -> str:
         models = [AdAccountModel(**d) for d in raw]
         return format_account_list(models)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def get_account_info(ctx: Context, account_id: str | None = None) -> str:
@@ -37,7 +37,7 @@ async def get_account_info(ctx: Context, account_id: str | None = None) -> str:
         model = AdAccountModel(**raw)
         return format_account(model)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 def register(mcp: FastMCP) -> None:

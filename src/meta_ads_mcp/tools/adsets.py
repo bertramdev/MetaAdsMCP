@@ -8,11 +8,13 @@ from meta_ads_mcp.client import MetaAdsError
 from meta_ads_mcp.formatting import (
     format_ad_set,
     format_ad_set_list,
+    format_diagnostics,
     format_error,
+    format_learning_stage,
     format_update_result,
     format_write_result,
 )
-from meta_ads_mcp.models import AdSetModel
+from meta_ads_mcp.models import AdSetDiagnosticsModel, AdSetModel
 from meta_ads_mcp.tools import get_client
 from meta_ads_mcp.tools._write_helpers import (
     cents_display,
@@ -20,6 +22,7 @@ from meta_ads_mcp.tools._write_helpers import (
     fetch_and_update,
     format_write_error,
     merge_updates,
+    parse_json_list_param,
     parse_json_param,
     validate_status,
 )
@@ -55,7 +58,7 @@ async def list_ad_sets(
         models = [AdSetModel(**d) for d in raw]
         return format_ad_set_list(models)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def get_ad_set(ctx: Context, ad_set_id: str) -> str:
@@ -73,7 +76,7 @@ async def get_ad_set(ctx: Context, ad_set_id: str) -> str:
         model = AdSetModel(**raw)
         return format_ad_set(model)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def create_ad_set(
@@ -91,6 +94,8 @@ async def create_ad_set(
     start_time: str | None = None,
     end_time: str | None = None,
     promoted_object: str | None = None,
+    frequency_control_specs: str | None = None,
+    attribution_spec: str | None = None,
     dry_run: bool = False,
 ) -> str:
     """Create a new ad set (defaults to PAUSED).
@@ -113,6 +118,10 @@ async def create_ad_set(
         start_time: Start time in ISO 8601 format. Optional.
         end_time: End time in ISO 8601 format. Optional.
         promoted_object: Promoted object as JSON string. Optional.
+        frequency_control_specs: Frequency cap as JSON string
+            (e.g., '[{"event":"IMPRESSIONS","interval_days":7,"max_frequency":3}]').
+            Optional.
+        attribution_spec: Attribution spec as JSON string. Optional.
         dry_run: If True, validate without creating. Default False.
     """
     try:
@@ -122,6 +131,16 @@ async def create_ad_set(
         promoted_dict: dict[str, Any] | None = None
         if promoted_object:
             promoted_dict = parse_json_param(promoted_object, "promoted_object")
+
+        freq_specs: list[dict[str, Any]] | None = None
+        if frequency_control_specs:
+            freq_specs = parse_json_list_param(
+                frequency_control_specs, "frequency_control_specs"
+            )
+
+        attr_spec: list[dict[str, Any]] | None = None
+        if attribution_spec:
+            attr_spec = parse_json_list_param(attribution_spec, "attribution_spec")
 
         daily_cents = dollars_to_cents(daily_budget) if daily_budget else None
         lifetime_cents = dollars_to_cents(lifetime_budget) if lifetime_budget else None
@@ -141,6 +160,8 @@ async def create_ad_set(
             start_time=start_time,
             end_time=end_time,
             promoted_object=promoted_dict,
+            frequency_control_specs=freq_specs,
+            attribution_spec=attr_spec,
             dry_run=dry_run,
         )
 
@@ -176,6 +197,8 @@ async def update_ad_set(
     start_time: str | None = None,
     end_time: str | None = None,
     optimization_goal: str | None = None,
+    frequency_control_specs: str | None = None,
+    attribution_spec: str | None = None,
     dry_run: bool = False,
 ) -> str:
     """Update an existing ad set.
@@ -195,6 +218,10 @@ async def update_ad_set(
         start_time: New start time in ISO 8601 format. Optional.
         end_time: New end time in ISO 8601 format. Optional.
         optimization_goal: New optimization goal. Optional.
+        frequency_control_specs: Frequency cap as JSON string
+            (e.g., '[{"event":"IMPRESSIONS","interval_days":7,"max_frequency":3}]').
+            Optional.
+        attribution_spec: Attribution spec as JSON string. Optional.
         dry_run: If True, validate without updating. Default False.
     """
     try:
@@ -206,6 +233,16 @@ async def update_ad_set(
         targeting_dict: dict[str, Any] | None = None
         if targeting is not None:
             targeting_dict = parse_json_param(targeting, "targeting")
+
+        freq_specs: list[dict[str, Any]] | None = None
+        if frequency_control_specs:
+            freq_specs = parse_json_list_param(
+                frequency_control_specs, "frequency_control_specs"
+            )
+
+        attr_spec: list[dict[str, Any]] | None = None
+        if attribution_spec:
+            attr_spec = parse_json_list_param(attribution_spec, "attribution_spec")
 
         daily_cents = dollars_to_cents(daily_budget) if daily_budget else None
         lifetime_cents = dollars_to_cents(lifetime_budget) if lifetime_budget else None
@@ -226,6 +263,8 @@ async def update_ad_set(
                 start_time=start_time,
                 end_time=end_time,
                 optimization_goal=optimization_goal,
+                frequency_control_specs=freq_specs,
+                attribution_spec=attr_spec,
                 dry_run=dry_run,
             ),
         )
@@ -253,6 +292,10 @@ async def update_ad_set(
                 current.get("optimization_goal", ""),
                 optimization_goal,
             )
+        if frequency_control_specs is not None:
+            changes["Frequency Control"] = ("(previous)", "(updated)")
+        if attribution_spec is not None:
+            changes["Attribution Spec"] = ("(previous)", "(updated)")
 
         model = AdSetModel(
             **merge_updates(
@@ -279,6 +322,29 @@ async def update_ad_set(
         return format_write_error(e)
 
 
+async def get_ad_set_diagnostics(ctx: Context, ad_set_id: str) -> str:
+    """Get diagnostic issues, recommendations, and learning stage for an ad set.
+
+    Shows delivery issues, optimization recommendations, and learning
+    stage status. Learning stage indicates whether the algorithm has
+    enough data to optimize delivery.
+
+    Args:
+        ad_set_id: The ad set ID.
+    """
+    try:
+        client = get_client(ctx)
+        raw = await client.get_ad_set_diagnostics(ad_set_id)
+        model = AdSetDiagnosticsModel(**raw)
+        base = format_diagnostics(
+            "Ad Set", model.name, model.issues_info, model.recommendations
+        )
+        learning = format_learning_stage(model.learning_stage_info)
+        return base + "\n\n" + learning
+    except MetaAdsError as e:
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+
+
 def register(mcp: FastMCP) -> None:
     """Register ad set tools with the MCP server.
 
@@ -289,3 +355,4 @@ def register(mcp: FastMCP) -> None:
     mcp.tool()(get_ad_set)
     mcp.tool()(create_ad_set)
     mcp.tool()(update_ad_set)
+    mcp.tool()(get_ad_set_diagnostics)

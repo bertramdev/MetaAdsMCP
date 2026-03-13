@@ -316,3 +316,251 @@ class TestClientMethods:
 
             assert exc_info.value.error_code == 190
             assert exc_info.value.error_subcode == 463
+
+    @pytest.mark.asyncio
+    async def test_get_creatives_includes_v25_fields(
+        self, client: MetaAdsClient
+    ) -> None:
+        """get_creatives requests v25 creative fields."""
+        mock_creative = FakeSDKObject({"id": "cr_1", "name": "Creative 1"})
+
+        with patch("meta_ads_mcp.client.AdAccount") as MockAdAccount:
+            mock_account = MagicMock()
+            mock_account.get_ad_creatives.return_value = [mock_creative]
+            MockAdAccount.return_value = mock_account
+
+            await client.get_creatives("act_123")
+
+            call_args = mock_account.get_ad_creatives.call_args
+            field_names = [str(f) for f in call_args.kwargs.get("fields", [])]
+            for expected in ["status", "object_story_spec", "url_tags", "image_hash"]:
+                assert any(
+                    expected in name for name in field_names
+                ), f"{expected} not in fields"
+
+    @pytest.mark.asyncio
+    async def test_get_creative_includes_v25_fields(
+        self, client: MetaAdsClient
+    ) -> None:
+        """get_creative requests v25 creative fields."""
+        mock = FakeSDKObject({"id": "cr_1", "name": "Creative 1"})
+        mock.api_get = MagicMock()
+
+        with patch("meta_ads_mcp.client.AdCreative") as MockAdCreative:
+            MockAdCreative.return_value = mock
+            await client.get_creative("cr_1")
+
+            call_args = mock.api_get.call_args
+            field_names = [str(f) for f in call_args.kwargs.get("fields", [])]
+            for expected in ["status", "object_story_spec", "url_tags", "image_hash"]:
+                assert any(
+                    expected in name for name in field_names
+                ), f"{expected} not in fields"
+
+    @pytest.mark.asyncio
+    async def test_get_audiences_includes_v25_fields(
+        self, client: MetaAdsClient
+    ) -> None:
+        """get_audiences requests v25 audience fields."""
+        mock_audience = FakeSDKObject({"id": "aud_1", "name": "Audience 1"})
+
+        with patch("meta_ads_mcp.client.AdAccount") as MockAdAccount:
+            mock_account = MagicMock()
+            mock_account.get_custom_audiences.return_value = [mock_audience]
+            MockAdAccount.return_value = mock_account
+
+            await client.get_audiences("act_123")
+
+            call_args = mock_account.get_custom_audiences.call_args
+            field_names = [str(f) for f in call_args.kwargs.get("fields", [])]
+            for expected in [
+                "lookalike_spec",
+                "rule",
+                "data_source",
+                "retention_days",
+                "is_value_based",
+                "sharing_status",
+                "time_created",
+                "time_updated",
+            ]:
+                assert any(
+                    expected in name for name in field_names
+                ), f"{expected} not in fields"
+
+    @pytest.mark.asyncio
+    async def test_get_audience_includes_v25_fields(
+        self, client: MetaAdsClient
+    ) -> None:
+        """get_audience requests v25 audience fields."""
+        mock = FakeSDKObject({"id": "aud_1", "name": "Audience 1"})
+        mock.api_get = MagicMock()
+
+        with patch("meta_ads_mcp.client.CustomAudience") as MockCustomAudience:
+            MockCustomAudience.return_value = mock
+            await client.get_audience("aud_1")
+
+            call_args = mock.api_get.call_args
+            field_names = [str(f) for f in call_args.kwargs.get("fields", [])]
+            for expected in [
+                "lookalike_spec",
+                "rule",
+                "data_source",
+                "retention_days",
+                "is_value_based",
+                "sharing_status",
+                "time_created",
+                "time_updated",
+            ]:
+                assert any(
+                    expected in name for name in field_names
+                ), f"{expected} not in fields"
+
+    @pytest.mark.asyncio
+    async def test_get_campaigns_v25_fields(self, client: MetaAdsClient) -> None:
+        """get_campaigns requests v25 campaign fields."""
+        mock_campaign = FakeSDKObject({"id": "camp_1", "name": "Campaign 1"})
+
+        with patch("meta_ads_mcp.client.AdAccount") as MockAdAccount:
+            mock_account = MagicMock()
+            mock_account.get_campaigns.return_value = [mock_campaign]
+            MockAdAccount.return_value = mock_account
+
+            await client.get_campaigns("act_123")
+
+            call_args = mock_account.get_campaigns.call_args
+            field_names = [str(f) for f in call_args.kwargs.get("fields", [])]
+            for expected in [
+                "bid_strategy",
+                "spend_cap",
+                "pacing_type",
+                "buying_type",
+                "special_ad_categories",
+                "configured_status",
+            ]:
+                assert any(
+                    expected in name for name in field_names
+                ), f"{expected} not in campaign fields"
+
+    @pytest.mark.asyncio
+    async def test_get_campaign_v25_fields(self, client: MetaAdsClient) -> None:
+        """get_campaign requests v25 campaign fields."""
+        mock = FakeSDKObject({"id": "camp_1", "name": "Campaign 1"})
+        mock.api_get = MagicMock()
+
+        with patch("meta_ads_mcp.client.Campaign") as MockCampaign:
+            MockCampaign.return_value = mock
+            await client.get_campaign("camp_1")
+
+            call_args = mock.api_get.call_args
+            field_names = [str(f) for f in call_args.kwargs.get("fields", [])]
+            for expected in [
+                "bid_strategy",
+                "spend_cap",
+                "pacing_type",
+                "buying_type",
+                "special_ad_categories",
+                "configured_status",
+            ]:
+                assert any(
+                    expected in name for name in field_names
+                ), f"{expected} not in campaign fields"
+
+    @pytest.mark.asyncio
+    async def test_get_ad_sets_v25_fields(self, client: MetaAdsClient) -> None:
+        """get_ad_sets requests v25 ad set fields."""
+        mock_adset = FakeSDKObject({"id": "adset_1", "name": "Ad Set 1"})
+
+        with patch("meta_ads_mcp.client.AdAccount") as MockAdAccount:
+            mock_account = MagicMock()
+            mock_account.get_ad_sets.return_value = [mock_adset]
+            MockAdAccount.return_value = mock_account
+
+            await client.get_ad_sets("act_123")
+
+            call_args = mock_account.get_ad_sets.call_args
+            field_names = [str(f) for f in call_args.kwargs.get("fields", [])]
+            for expected in [
+                "bid_amount",
+                "bid_strategy",
+                "destination_type",
+                "frequency_control_specs",
+                "attribution_spec",
+                "is_dynamic_creative",
+                "optimization_sub_event",
+                "pacing_type",
+            ]:
+                assert any(
+                    expected in name for name in field_names
+                ), f"{expected} not in ad set fields"
+
+    @pytest.mark.asyncio
+    async def test_get_ad_set_v25_fields(self, client: MetaAdsClient) -> None:
+        """get_ad_set requests v25 ad set fields."""
+        mock = FakeSDKObject({"id": "adset_1", "name": "Ad Set 1"})
+        mock.api_get = MagicMock()
+
+        with patch("meta_ads_mcp.client.AdSet") as MockAdSet:
+            MockAdSet.return_value = mock
+            await client.get_ad_set("adset_1")
+
+            call_args = mock.api_get.call_args
+            field_names = [str(f) for f in call_args.kwargs.get("fields", [])]
+            for expected in [
+                "bid_amount",
+                "bid_strategy",
+                "destination_type",
+                "frequency_control_specs",
+                "attribution_spec",
+                "is_dynamic_creative",
+                "optimization_sub_event",
+                "pacing_type",
+            ]:
+                assert any(
+                    expected in name for name in field_names
+                ), f"{expected} not in ad set fields"
+
+    @pytest.mark.asyncio
+    async def test_get_ads_v25_fields(self, client: MetaAdsClient) -> None:
+        """get_ads requests v25 ad fields."""
+        mock_ad = FakeSDKObject({"id": "ad_1", "name": "Ad 1"})
+
+        with patch("meta_ads_mcp.client.AdAccount") as MockAdAccount:
+            mock_account = MagicMock()
+            mock_account.get_ads.return_value = [mock_ad]
+            MockAdAccount.return_value = mock_account
+
+            await client.get_ads("act_123")
+
+            call_args = mock_account.get_ads.call_args
+            field_names = [str(f) for f in call_args.kwargs.get("fields", [])]
+            for expected in [
+                "configured_status",
+                "tracking_specs",
+                "conversion_specs",
+                "preview_shareable_link",
+            ]:
+                assert any(
+                    expected in name for name in field_names
+                ), f"{expected} not in ad fields"
+
+    @pytest.mark.asyncio
+    async def test_get_ad_v25_fields(self, client: MetaAdsClient) -> None:
+        """get_ad requests v25 ad fields."""
+        mock = FakeSDKObject({"id": "ad_1", "name": "Ad 1"})
+        mock.api_get = MagicMock()
+
+        with patch("meta_ads_mcp.client.Ad") as MockAd:
+            MockAd.return_value = mock
+            await client.get_ad("ad_1")
+
+            call_args = mock.api_get.call_args
+            field_names = [str(f) for f in call_args.kwargs.get("fields", [])]
+            for expected in [
+                "configured_status",
+                "tracking_specs",
+                "conversion_specs",
+                "preview_shareable_link",
+            ]:
+                assert any(
+                    expected in name for name in field_names
+                ), f"{expected} not in ad fields"

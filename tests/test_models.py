@@ -127,6 +127,31 @@ class TestCampaignModel:
         model = CampaignModel(id="123", extra_field="ignored")  # type: ignore[call-arg]
         assert model.id == "123"
 
+    def test_new_fields_defaults(self) -> None:
+        """New v25 fields have sensible defaults."""
+        model = CampaignModel()
+        assert model.bid_strategy == ""
+        assert model.spend_cap == "0"
+        assert model.pacing_type == []
+        assert model.buying_type == ""
+        assert model.special_ad_categories == []
+        assert model.configured_status == ""
+
+    def test_spend_cap_formatted_zero(self) -> None:
+        """spend_cap_formatted returns 'Not set' for zero."""
+        model = CampaignModel(spend_cap="0")
+        assert model.spend_cap_formatted == "Not set"
+
+    def test_spend_cap_formatted_valid(self) -> None:
+        """spend_cap_formatted converts cents to dollars."""
+        model = CampaignModel(spend_cap="50000")
+        assert model.spend_cap_formatted == "$500.00"
+
+    def test_spend_cap_formatted_invalid(self) -> None:
+        """spend_cap_formatted falls back to raw value on invalid input."""
+        model = CampaignModel(spend_cap="n/a")
+        assert model.spend_cap_formatted == "n/a"
+
 
 class TestAdSetModel:
     """Tests for AdSetModel."""
@@ -185,6 +210,60 @@ class TestAdSetModel:
         model = AdSetModel(targeting={"custom_audiences": [{"id": "123"}]})
         assert model.targeting_summary == "Custom targeting"
 
+    def test_new_fields_defaults(self) -> None:
+        """New v25 fields have sensible defaults."""
+        model = AdSetModel()
+        assert model.bid_amount == "0"
+        assert model.bid_strategy == ""
+        assert model.destination_type == ""
+        assert model.frequency_control_specs == []
+        assert model.attribution_spec == []
+        assert model.is_dynamic_creative is False
+        assert model.optimization_sub_event == ""
+        assert model.pacing_type == []
+
+    def test_bid_amount_formatted_zero(self) -> None:
+        """bid_amount_formatted returns 'Not set' for zero."""
+        model = AdSetModel(bid_amount="0")
+        assert model.bid_amount_formatted == "Not set"
+
+    def test_bid_amount_formatted_valid(self) -> None:
+        """bid_amount_formatted converts cents to dollars."""
+        model = AdSetModel(bid_amount="1500")
+        assert model.bid_amount_formatted == "$15.00"
+
+    def test_bid_amount_formatted_invalid(self) -> None:
+        """bid_amount_formatted falls back to raw value on invalid input."""
+        model = AdSetModel(bid_amount="bad")
+        assert model.bid_amount_formatted == "bad"
+
+    def test_frequency_cap_summary_empty(self) -> None:
+        """frequency_cap_summary returns 'No frequency cap' when empty."""
+        model = AdSetModel()
+        assert model.frequency_cap_summary == "No frequency cap"
+
+    def test_frequency_cap_summary_single(self) -> None:
+        """frequency_cap_summary formats a single spec."""
+        model = AdSetModel(
+            frequency_control_specs=[
+                {"event": "IMPRESSIONS", "interval_days": 7, "max_frequency": 3}
+            ]
+        )
+        assert model.frequency_cap_summary == "3 impressions per 7 days"
+
+    def test_frequency_cap_summary_multiple(self) -> None:
+        """frequency_cap_summary formats multiple specs."""
+        model = AdSetModel(
+            frequency_control_specs=[
+                {"event": "IMPRESSIONS", "interval_days": 7, "max_frequency": 3},
+                {"event": "CLICKS", "interval_days": 1, "max_frequency": 1},
+            ]
+        )
+        summary = model.frequency_cap_summary
+        assert "3 impressions per 7 days" in summary
+        assert "1 clicks per 1 days" in summary
+        assert "; " in summary
+
 
 class TestAdModel:
     """Tests for AdModel."""
@@ -210,6 +289,27 @@ class TestAdModel:
         model = AdModel()
         assert model.creative_id == ""
 
+    def test_new_fields_defaults(self) -> None:
+        """New v25 fields have sensible defaults."""
+        model = AdModel()
+        assert model.configured_status == ""
+        assert model.tracking_specs == []
+        assert model.conversion_specs == []
+        assert model.preview_shareable_link == ""
+
+    def test_new_fields_populated(self) -> None:
+        """New v25 fields accept data correctly."""
+        model = AdModel(
+            configured_status="ACTIVE",
+            tracking_specs=[{"action.type": ["offsite_conversion"]}],
+            conversion_specs=[{"action.type": ["offsite_conversion"]}],
+            preview_shareable_link="https://www.facebook.com/ads/preview/123",
+        )
+        assert model.configured_status == "ACTIVE"
+        assert len(model.tracking_specs) == 1
+        assert len(model.conversion_specs) == 1
+        assert "facebook.com" in model.preview_shareable_link
+
 
 class TestAdCreativeModel:
     """Tests for AdCreativeModel."""
@@ -233,6 +333,69 @@ class TestAdCreativeModel:
         model = AdCreativeModel()
         assert model.id == ""
         assert model.title == ""
+
+    def test_new_fields_defaults(self) -> None:
+        """New v25 fields have sensible defaults."""
+        model = AdCreativeModel()
+        assert model.status == ""
+        assert model.object_story_spec == {}
+        assert model.url_tags == ""
+        assert model.image_hash == ""
+
+    def test_object_story_summary_empty(self) -> None:
+        """object_story_summary returns default when no spec."""
+        model = AdCreativeModel()
+        assert model.object_story_summary == "No object story"
+
+    def test_object_story_summary_with_link_data(self) -> None:
+        """object_story_summary extracts link data."""
+        model = AdCreativeModel(
+            object_story_spec={
+                "page_id": "12345",
+                "link_data": {
+                    "link": "https://example.com",
+                    "message": "Check this out!",
+                },
+            }
+        )
+        summary = model.object_story_summary
+        assert "Page: 12345" in summary
+        assert "Link: https://example.com" in summary
+        assert "Message: Check this out!" in summary
+
+    def test_object_story_summary_with_video_data(self) -> None:
+        """object_story_summary identifies video creatives."""
+        model = AdCreativeModel(
+            object_story_spec={
+                "page_id": "12345",
+                "video_data": {"video_id": "999"},
+            }
+        )
+        summary = model.object_story_summary
+        assert "Page: 12345" in summary
+        assert "Type: Video" in summary
+
+    def test_object_story_summary_page_only(self) -> None:
+        """object_story_summary with just a page_id."""
+        model = AdCreativeModel(object_story_spec={"page_id": "12345"})
+        assert model.object_story_summary == "Page: 12345"
+
+    def test_object_story_summary_custom(self) -> None:
+        """object_story_summary falls back to custom label."""
+        model = AdCreativeModel(object_story_spec={"unknown_key": "value"})
+        assert model.object_story_summary == "Custom object story"
+
+    def test_object_story_summary_long_message_truncated(self) -> None:
+        """object_story_summary truncates long messages."""
+        long_msg = "A" * 60
+        model = AdCreativeModel(
+            object_story_spec={
+                "link_data": {"message": long_msg},
+            }
+        )
+        summary = model.object_story_summary
+        assert "..." in summary
+        assert len(summary) < len(long_msg) + 30
 
 
 class TestInsightRow:
@@ -330,3 +493,67 @@ class TestCustomAudienceModel:
         """size_display handles zero bounds."""
         model = CustomAudienceModel()
         assert model.size_display == "Size unavailable"
+
+    def test_new_fields_defaults(self) -> None:
+        """New v25 fields have sensible defaults."""
+        model = CustomAudienceModel()
+        assert model.lookalike_spec == {}
+        assert model.rule == {}
+        assert model.data_source == {}
+        assert model.retention_days == 0
+        assert model.is_value_based is False
+        assert model.sharing_status == ""
+        assert model.time_created == ""
+        assert model.time_updated == ""
+
+    def test_lookalike_summary_not_lookalike(self) -> None:
+        """lookalike_summary returns default when no spec."""
+        model = CustomAudienceModel()
+        assert model.lookalike_summary == "Not a lookalike audience"
+
+    def test_lookalike_summary_with_data(self) -> None:
+        """lookalike_summary formats full spec."""
+        model = CustomAudienceModel(
+            lookalike_spec={
+                "country": "US",
+                "ratio": 0.01,
+                "origin": [{"id": "123", "name": "Website Visitors"}],
+            }
+        )
+        summary = model.lookalike_summary
+        assert "Country: US" in summary
+        assert "Ratio: 1%" in summary
+        assert "Source: Website Visitors" in summary
+
+    def test_lookalike_summary_empty_origin(self) -> None:
+        """lookalike_summary handles empty origin list."""
+        model = CustomAudienceModel(
+            lookalike_spec={"country": "US", "ratio": 0.05, "origin": []}
+        )
+        summary = model.lookalike_summary
+        assert "Country: US" in summary
+        assert "Source" not in summary
+
+    def test_lookalike_summary_minimal(self) -> None:
+        """lookalike_summary with minimal data."""
+        model = CustomAudienceModel(lookalike_spec={"other": "data"})
+        assert model.lookalike_summary == "Lookalike audience"
+
+    def test_data_source_summary_empty(self) -> None:
+        """data_source_summary returns default when no source."""
+        model = CustomAudienceModel()
+        assert model.data_source_summary == "No data source"
+
+    def test_data_source_summary_with_data(self) -> None:
+        """data_source_summary formats type and sub-type."""
+        model = CustomAudienceModel(
+            data_source={"type": "PIXEL", "sub_type": "WEBSITE_VISITORS"}
+        )
+        summary = model.data_source_summary
+        assert "Type: PIXEL" in summary
+        assert "Sub-type: WEBSITE_VISITORS" in summary
+
+    def test_data_source_summary_custom(self) -> None:
+        """data_source_summary falls back to custom label."""
+        model = CustomAudienceModel(data_source={"unknown": "field"})
+        assert model.data_source_summary == "Custom data source"

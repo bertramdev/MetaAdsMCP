@@ -37,8 +37,9 @@ async def get_insights(
 
     Args:
         account_id: Ad account ID (e.g., act_123456789).
-        date_preset: Date preset (today, yesterday, last_7d,
-            last_14d, last_30d, this_month, last_month).
+        date_preset: Date preset (today, yesterday, last_3d, last_7d,
+            last_14d, last_30d, last_90d, this_month, last_month,
+            this_quarter, last_quarter, this_year, last_year).
         start_date: Start date YYYY-MM-DD, use with end_date.
         end_date: End date YYYY-MM-DD, use with start_date.
         level: Aggregation level: account, campaign, adset, ad.
@@ -53,13 +54,15 @@ async def get_insights(
         time_range = None
         if start_date and end_date:
             time_range = {"since": start_date, "until": end_date}
+        elif date_preset:
+            since, until = resolve_date_preset(date_preset)
+            time_range = {"since": since, "until": until}
         breakdown_list = (
             [b.strip() for b in breakdowns.split(",")] if breakdowns else None
         )
         field_list = [f.strip() for f in fields.split(",")] if fields else None
         raw = await client.get_insights(
             account_id=account_id,
-            date_preset=date_preset if not time_range else None,
             level=level,
             breakdowns=breakdown_list,
             fields=field_list,
@@ -68,8 +71,8 @@ async def get_insights(
         )
         models = [InsightRow(**d) for d in raw]
         return format_insights_table(models)
-    except MetaAdsError as e:
-        return format_error(e.message)
+    except (MetaAdsError, ValueError) as e:
+        return format_error(str(e))
 
 
 async def get_account_insights(
@@ -84,7 +87,7 @@ async def get_account_insights(
 
     Args:
         account_id: Ad account ID (e.g., act_123456789).
-        date_preset: Date preset (e.g., last_7d, last_30d).
+        date_preset: Date preset (e.g., last_7d, last_30d, this_quarter).
     """
     return await get_insights(
         ctx, account_id=account_id, date_preset=date_preset, level="account"
@@ -106,7 +109,7 @@ async def get_campaign_insights(
 
     Args:
         campaign_id: The campaign ID to get insights for.
-        date_preset: Date preset (e.g., last_7d, last_30d).
+        date_preset: Date preset (e.g., last_7d, last_30d, this_quarter).
         compare: Compare current to previous period.
         account_id: Ad account ID (e.g., act_123456789).
     """
@@ -153,7 +156,9 @@ async def get_campaign_insights(
             previous_label=previous_label,
         )
     except (MetaAdsError, ValueError) as e:
-        return format_error(str(e))
+        code = e.error_code if isinstance(e, MetaAdsError) else None
+        hint = e.hint if isinstance(e, MetaAdsError) else ""
+        return format_error(str(e), error_code=code, hint=hint)
 
 
 async def compare_performance(
@@ -171,7 +176,7 @@ async def compare_performance(
     Args:
         entity_ids: Comma-separated IDs (e.g., "123,456,789").
         entity_type: campaign, adset, or ad. Default campaign.
-        date_preset: Date preset (e.g., last_7d, last_30d).
+        date_preset: Date preset (e.g., last_7d, last_30d, this_quarter).
         account_id: Ad account ID (e.g., act_123456789).
     """
     try:
@@ -216,7 +221,9 @@ async def compare_performance(
 
         return format_performance_comparison(rows_by_entity, entity_type)
     except (MetaAdsError, ValueError) as e:
-        return format_error(str(e))
+        code = e.error_code if isinstance(e, MetaAdsError) else None
+        hint = e.hint if isinstance(e, MetaAdsError) else ""
+        return format_error(str(e), error_code=code, hint=hint)
 
 
 async def get_breakdown_report(
@@ -236,7 +243,7 @@ async def get_breakdown_report(
         breakdown: Breakdown dimension (age, gender, country,
             placement, device_platform, publisher_platform).
         account_id: Ad account ID (e.g., act_123456789).
-        date_preset: Date preset (e.g., last_7d, last_30d).
+        date_preset: Date preset (e.g., last_7d, last_30d, this_quarter).
         level: Aggregation level: account, campaign, adset, ad.
         limit: Maximum rows to return. Default 50.
     """
@@ -248,18 +255,20 @@ async def get_breakdown_report(
 
     try:
         client = get_client(ctx)
+        since, until = resolve_date_preset(date_preset)
+        time_range = {"since": since, "until": until}
         raw = await client.get_insights(
             account_id=account_id,
-            date_preset=date_preset,
             level=level,
             breakdowns=[breakdown],
+            time_range=time_range,
             limit=limit,
         )
         models = [InsightRow(**d) for d in raw]
         title = f"Breakdown by {breakdown.replace('_', ' ').title()}"
         return format_insights_table(models, title=title)
-    except MetaAdsError as e:
-        return format_error(e.message)
+    except (MetaAdsError, ValueError) as e:
+        return format_error(str(e))
 
 
 def register(mcp: FastMCP) -> None:

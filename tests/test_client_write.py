@@ -419,3 +419,135 @@ class TestUpdateAd:
 
             with pytest.raises(MetaAdsError, match="Invalid ad"):
                 await client.update_ad(ad_id="ad_bad", status="PAUSED")
+
+
+class TestCreateCustomAudience:
+    """Tests for client.create_custom_audience."""
+
+    @pytest.mark.asyncio
+    async def test_success(self, client: MetaAdsClient) -> None:
+        """Creates custom audience with correct params."""
+        result_obj = FakeSDKObject({"id": "aud_new"})
+
+        with patch("meta_ads_mcp.client.AdAccount") as MockAdAccount:  # noqa: N806
+            mock_account = MagicMock()
+            mock_account.create_custom_audience.return_value = result_obj
+            MockAdAccount.return_value = mock_account
+
+            result = await client.create_custom_audience(
+                name="Website Visitors",
+                subtype="WEBSITE",
+                pixel_id="px_123",
+                retention_days=30,
+            )
+
+        assert result["id"] == "aud_new"
+        call_params = mock_account.create_custom_audience.call_args
+        params = call_params.kwargs.get("params") or call_params[1]["params"]
+        assert params["name"] == "Website Visitors"
+        assert params["subtype"] == "WEBSITE"
+        assert params["pixel_id"] == "px_123"
+        assert params["retention_days"] == 30
+
+    @pytest.mark.asyncio
+    async def test_dry_run(self, client: MetaAdsClient) -> None:
+        """Dry run adds validate_only execution option."""
+        result_obj = FakeSDKObject({"id": ""})
+
+        with patch("meta_ads_mcp.client.AdAccount") as MockAdAccount:  # noqa: N806
+            mock_account = MagicMock()
+            mock_account.create_custom_audience.return_value = result_obj
+            MockAdAccount.return_value = mock_account
+
+            await client.create_custom_audience(
+                name="Test",
+                subtype="WEBSITE",
+                dry_run=True,
+            )
+
+        call_params = mock_account.create_custom_audience.call_args
+        params = call_params.kwargs.get("params") or call_params[1]["params"]
+        assert params["execution_options"] == ["validate_only"]
+
+    @pytest.mark.asyncio
+    async def test_api_error(self, client: MetaAdsClient) -> None:
+        """API errors are converted to MetaAdsError."""
+        error = _make_sdk_error("Invalid audience", code=100)
+
+        with patch("meta_ads_mcp.client.AdAccount") as MockAdAccount:  # noqa: N806
+            mock_account = MagicMock()
+            mock_account.create_custom_audience.side_effect = error
+            MockAdAccount.return_value = mock_account
+
+            with pytest.raises(MetaAdsError, match="Invalid audience"):
+                await client.create_custom_audience(name="Fail", subtype="CUSTOM")
+
+
+class TestCreateLookalikeAudience:
+    """Tests for client.create_lookalike_audience."""
+
+    @pytest.mark.asyncio
+    async def test_success(self, client: MetaAdsClient) -> None:
+        """Creates lookalike audience with correct params."""
+        result_obj = FakeSDKObject({"id": "aud_lal"})
+
+        with patch("meta_ads_mcp.client.AdAccount") as MockAdAccount:  # noqa: N806
+            mock_account = MagicMock()
+            mock_account.create_custom_audience.return_value = result_obj
+            MockAdAccount.return_value = mock_account
+
+            result = await client.create_lookalike_audience(
+                name="US Lookalike",
+                origin_audience_id="aud_source",
+                country="US",
+                ratio=0.01,
+            )
+
+        assert result["id"] == "aud_lal"
+        call_params = mock_account.create_custom_audience.call_args
+        params = call_params.kwargs.get("params") or call_params[1]["params"]
+        assert params["name"] == "US Lookalike"
+        assert params["subtype"] == "LOOKALIKE"
+        assert params["lookalike_spec"]["origin_audience_id"] == "aud_source"
+        assert params["lookalike_spec"]["country"] == "US"
+        assert params["lookalike_spec"]["ratio"] == 0.01
+
+    @pytest.mark.asyncio
+    async def test_dry_run(self, client: MetaAdsClient) -> None:
+        """Dry run adds validate_only execution option."""
+        result_obj = FakeSDKObject({"id": ""})
+
+        with patch("meta_ads_mcp.client.AdAccount") as MockAdAccount:  # noqa: N806
+            mock_account = MagicMock()
+            mock_account.create_custom_audience.return_value = result_obj
+            MockAdAccount.return_value = mock_account
+
+            await client.create_lookalike_audience(
+                name="Test",
+                origin_audience_id="aud_source",
+                country="US",
+                ratio=0.01,
+                dry_run=True,
+            )
+
+        call_params = mock_account.create_custom_audience.call_args
+        params = call_params.kwargs.get("params") or call_params[1]["params"]
+        assert params["execution_options"] == ["validate_only"]
+
+    @pytest.mark.asyncio
+    async def test_api_error(self, client: MetaAdsClient) -> None:
+        """API errors are converted to MetaAdsError."""
+        error = _make_sdk_error("Source not found", code=100)
+
+        with patch("meta_ads_mcp.client.AdAccount") as MockAdAccount:  # noqa: N806
+            mock_account = MagicMock()
+            mock_account.create_custom_audience.side_effect = error
+            MockAdAccount.return_value = mock_account
+
+            with pytest.raises(MetaAdsError, match="Source not found"):
+                await client.create_lookalike_audience(
+                    name="Fail",
+                    origin_audience_id="aud_bad",
+                    country="US",
+                    ratio=0.01,
+                )

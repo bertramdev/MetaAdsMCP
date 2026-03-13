@@ -76,6 +76,30 @@ def parse_json_param(value: str, param_name: str) -> dict[str, Any]:
     return parsed
 
 
+def parse_json_list_param(value: str, param_name: str) -> list[dict[str, Any]]:
+    """Parse a JSON string parameter into a list of dictionaries.
+
+    Args:
+        value: JSON string to parse.
+        param_name: Parameter name for error messages.
+
+    Returns:
+        Parsed list of dictionaries.
+
+    Raises:
+        ValueError: If the string is not valid JSON or not a JSON array of objects.
+    """
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON for {param_name}: {e}")
+    if not isinstance(parsed, list):
+        raise ValueError(
+            f"{param_name} must be a JSON array, got {type(parsed).__name__}"
+        )
+    return parsed
+
+
 def cents_display(cents: int | str) -> str:
     """Format a cents value as a dollar string.
 
@@ -108,7 +132,7 @@ def merge_updates(current: dict[str, Any], updates: dict[str, Any]) -> dict[str,
 def format_write_error(e: Exception) -> str:
     """Format a write operation error as markdown.
 
-    Handles both MetaAdsError (with .message) and plain exceptions.
+    Handles both MetaAdsError (with .message, error_code, hint) and plain exceptions.
 
     Args:
         e: The caught exception.
@@ -116,8 +140,9 @@ def format_write_error(e: Exception) -> str:
     Returns:
         Formatted error markdown string.
     """
-    msg = e.message if isinstance(e, MetaAdsError) else str(e)
-    return format_error(msg)
+    if isinstance(e, MetaAdsError):
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+    return format_error(str(e))
 
 
 async def fetch_and_update(

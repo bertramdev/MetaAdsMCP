@@ -52,9 +52,22 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     Yields:
         The initialized AppContext.
     """
-    config = MetaAdsConfig.from_env()
-    client = MetaAdsClient(config)
-    client.initialize()
+    try:
+        config = MetaAdsConfig.from_env()
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to load configuration: {e}. "
+            "Ensure META_ACCESS_TOKEN, META_APP_ID, and META_APP_SECRET "
+            "are set in your environment or .env file."
+        ) from e
+    try:
+        client = MetaAdsClient(config)
+        client.initialize()
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to initialize Meta Ads client: {e}. "
+            "Check that your credentials are valid."
+        ) from e
     logger.info("Meta Ads MCP server started")
     yield AppContext(client=client, config=config)
     logger.info("Meta Ads MCP server stopped")

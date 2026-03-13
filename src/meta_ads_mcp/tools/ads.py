@@ -6,11 +6,14 @@ from meta_ads_mcp.client import MetaAdsError
 from meta_ads_mcp.formatting import (
     format_ad,
     format_ad_list,
+    format_ad_review_feedback,
+    format_delivery_checks,
+    format_diagnostics,
     format_error,
     format_update_result,
     format_write_result,
 )
-from meta_ads_mcp.models import AdModel
+from meta_ads_mcp.models import AdDiagnosticsModel, AdModel
 from meta_ads_mcp.tools import get_client
 from meta_ads_mcp.tools._write_helpers import (
     fetch_and_update,
@@ -52,7 +55,7 @@ async def list_ads(
         models = [AdModel(**d) for d in raw]
         return format_ad_list(models)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def get_ad(ctx: Context, ad_id: str) -> str:
@@ -70,7 +73,7 @@ async def get_ad(ctx: Context, ad_id: str) -> str:
         model = AdModel(**raw)
         return format_ad(model)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def create_ad(
@@ -114,7 +117,7 @@ async def create_ad(
         detail = format_ad(model)
         return format_write_result("Created", "Ad", detail, dry_run=dry_run)
     except MetaAdsError as e:
-        return format_error(e.message)
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
 
 
 async def update_ad_status(
@@ -153,6 +156,30 @@ async def update_ad_status(
         return format_write_error(e)
 
 
+async def get_ad_diagnostics(ctx: Context, ad_id: str) -> str:
+    """Get diagnostic info for an ad including review feedback and delivery checks.
+
+    Shows ad review feedback (policy rejection details), failed delivery
+    checks, issues, and recommendations. Critical for troubleshooting
+    rejected or underperforming ads.
+
+    Args:
+        ad_id: The ad ID.
+    """
+    try:
+        client = get_client(ctx)
+        raw = await client.get_ad_diagnostics(ad_id)
+        model = AdDiagnosticsModel(**raw)
+        base = format_diagnostics(
+            "Ad", model.name, model.issues_info, model.recommendations
+        )
+        review = format_ad_review_feedback(model.ad_review_feedback)
+        checks = format_delivery_checks(model.failed_delivery_checks)
+        return base + "\n\n" + review + "\n\n" + checks
+    except MetaAdsError as e:
+        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+
+
 def register(mcp: FastMCP) -> None:
     """Register ad tools with the MCP server.
 
@@ -163,3 +190,4 @@ def register(mcp: FastMCP) -> None:
     mcp.tool()(get_ad)
     mcp.tool()(create_ad)
     mcp.tool()(update_ad_status)
+    mcp.tool()(get_ad_diagnostics)

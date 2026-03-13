@@ -115,6 +115,31 @@ class TestCampaignFormatters:
         """Empty list returns message."""
         assert "No campaigns found" in format_campaign_list([])
 
+    def test_format_campaign_with_new_fields(self) -> None:
+        """Campaign formatter includes v25 fields."""
+        campaign = CampaignModel(
+            id="camp_v25",
+            name="V25 Campaign",
+            status="ACTIVE",
+            effective_status="ACTIVE",
+            objective="OUTCOME_SALES",
+            configured_status="ACTIVE",
+            buying_type="AUCTION",
+            bid_strategy="LOWEST_COST_WITHOUT_CAP",
+            spend_cap="100000",
+            special_ad_categories=["HOUSING"],
+        )
+        result = format_campaign(campaign)
+        assert "Configured Status" in result
+        assert "Buying Type" in result
+        assert "AUCTION" in result
+        assert "Bid Strategy" in result
+        assert "LOWEST_COST_WITHOUT_CAP" in result
+        assert "Spend Cap" in result
+        assert "$1,000.00" in result
+        assert "Special Ad Categories" in result
+        assert "HOUSING" in result
+
 
 class TestAdSetFormatters:
     """Tests for ad set formatters."""
@@ -148,6 +173,33 @@ class TestAdSetFormatters:
         """Empty list returns message."""
         assert "No ad sets found" in format_ad_set_list([])
 
+    def test_format_ad_set_with_new_fields(self) -> None:
+        """Ad set formatter includes v25 fields."""
+        ad_set = AdSetModel(
+            id="adset_v25",
+            name="V25 Ad Set",
+            status="ACTIVE",
+            effective_status="ACTIVE",
+            bid_strategy="LOWEST_COST_WITHOUT_CAP",
+            bid_amount="1500",
+            destination_type="WEBSITE",
+            frequency_control_specs=[
+                {"event": "IMPRESSIONS", "interval_days": 7, "max_frequency": 3}
+            ],
+            is_dynamic_creative=True,
+        )
+        result = format_ad_set(ad_set)
+        assert "Bid Strategy" in result
+        assert "LOWEST_COST_WITHOUT_CAP" in result
+        assert "Bid Amount" in result
+        assert "$15.00" in result
+        assert "Destination Type" in result
+        assert "WEBSITE" in result
+        assert "Frequency Cap" in result
+        assert "3 impressions per 7 days" in result
+        assert "Dynamic Creative" in result
+        assert "Yes" in result
+
 
 class TestAdFormatters:
     """Tests for ad formatters."""
@@ -180,6 +232,33 @@ class TestAdFormatters:
         """Empty list returns message."""
         assert "No ads found" in format_ad_list([])
 
+    def test_format_ad_with_new_fields(self) -> None:
+        """Ad formatter includes v25 fields when present."""
+        ad = AdModel(
+            id="ad_v25",
+            name="V25 Ad",
+            status="ACTIVE",
+            effective_status="ACTIVE",
+            configured_status="ACTIVE",
+            preview_shareable_link="https://www.facebook.com/ads/preview/123",
+        )
+        result = format_ad(ad)
+        assert "Configured Status" in result
+        assert "Preview Link" in result
+        assert "facebook.com" in result
+
+    def test_format_ad_without_optional_fields(self) -> None:
+        """Ad formatter omits optional fields when not set."""
+        ad = AdModel(
+            id="ad_basic",
+            name="Basic Ad",
+            status="ACTIVE",
+            effective_status="ACTIVE",
+        )
+        result = format_ad(ad)
+        assert "Configured Status" not in result
+        assert "Preview Link" not in result
+
 
 class TestCreativeFormatters:
     """Tests for creative formatters."""
@@ -198,6 +277,42 @@ class TestCreativeFormatters:
         assert "## Creative: My Creative" in result
         assert "Buy Now" in result
         assert "LEARN_MORE" in result
+
+    def test_format_creative_with_new_fields(self) -> None:
+        """Creative formatter includes enriched v25 fields."""
+        creative = AdCreativeModel(
+            id="cr_456",
+            name="Enriched Creative",
+            title="Shop Now",
+            body="Amazing products!",
+            call_to_action_type="SHOP_NOW",
+            link_url="https://shop.example.com",
+            status="ACTIVE",
+            image_hash="abc123hash",
+            url_tags="utm_source=meta&utm_medium=cpc",
+            object_story_spec={
+                "page_id": "12345",
+                "link_data": {"link": "https://shop.example.com"},
+            },
+        )
+        result = format_creative(creative)
+        assert "**Status**: ACTIVE" in result
+        assert "**Image Hash**: abc123hash" in result
+        assert "**URL Tags**: utm_source=meta&utm_medium=cpc" in result
+        assert "**Object Story**:" in result
+        assert "Page: 12345" in result
+
+    def test_format_creative_without_optional_fields(self) -> None:
+        """Creative formatter omits empty optional v25 fields."""
+        creative = AdCreativeModel(
+            id="cr_789",
+            name="Basic Creative",
+        )
+        result = format_creative(creative)
+        assert "Status" not in result
+        assert "Image Hash" not in result
+        assert "URL Tags" not in result
+        assert "Object Story" not in result
 
     def test_format_creative_list(self) -> None:
         """Creative list formatted as table."""
@@ -301,6 +416,58 @@ class TestAudienceFormatters:
         assert "## Audience: Website Visitors" in result
         assert "50,000 - 75,000" in result
         assert "ready" in result
+
+    def test_format_audience_with_new_fields(self) -> None:
+        """Audience formatter includes enriched v25 fields."""
+        audience = CustomAudienceModel(
+            id="aud_456",
+            name="Lookalike Audience",
+            subtype="LOOKALIKE",
+            approximate_count_lower_bound=100000,
+            approximate_count_upper_bound=200000,
+            delivery_status={"status": "ready"},
+            operation_status={"status": "normal"},
+            description="1% lookalike of website visitors",
+            retention_days=30,
+            is_value_based=True,
+            sharing_status="shared",
+            lookalike_spec={
+                "country": "US",
+                "ratio": 0.01,
+                "origin": [{"id": "123", "name": "Website Visitors"}],
+            },
+            data_source={"type": "PIXEL", "sub_type": "WEBSITE_VISITORS"},
+            time_created="2026-01-15T10:00:00+0000",
+            time_updated="2026-03-01T12:00:00+0000",
+        )
+        result = format_audience(audience)
+        assert "**Retention Days**: 30" in result
+        assert "**Value-Based**: Yes" in result
+        assert "**Sharing Status**: shared" in result
+        assert "**Lookalike**:" in result
+        assert "Country: US" in result
+        assert "**Data Source**:" in result
+        assert "Type: PIXEL" in result
+        assert "**Created**: 2026-01-15T10:00:00+0000" in result
+        assert "**Updated**: 2026-03-01T12:00:00+0000" in result
+
+    def test_format_audience_without_optional_fields(self) -> None:
+        """Audience formatter omits empty optional v25 fields."""
+        audience = CustomAudienceModel(
+            id="aud_789",
+            name="Basic Audience",
+            subtype="CUSTOM",
+            delivery_status={"status": "ready"},
+            operation_status={"status": "normal"},
+        )
+        result = format_audience(audience)
+        assert "Retention Days" not in result
+        assert "Value-Based" not in result
+        assert "Sharing Status" not in result
+        assert "Lookalike" not in result
+        assert "Data Source" not in result
+        assert "Created" not in result
+        assert "Updated" not in result
 
     def test_format_audience_list(self) -> None:
         """Audience list formatted as table."""

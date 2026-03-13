@@ -19,9 +19,16 @@ A locally-hosted MCP server wrapping the Meta (Facebook) Ads API for agency/mult
 - All write ops default to PAUSED with dry_run support
 - Archive instead of delete
 
-### v3 — Advanced
+### v3 — SDK v25 Features (Complete)
+- Diagnostic tools for campaigns, ad sets, and ads
+- Enriched Pydantic models with v25 API fields
+- Creative create/update tools with dry_run support
+- Advantage+ campaign support, frequency capping, attribution spec
 - Audience creation (custom and lookalike)
-- Creative upload
+- 35 total MCP tools, 363 tests passing
+
+### v4 — Advanced
+- Creative asset upload (image/video)
 - Bulk operations
 - Automated reporting and trend analysis
 
@@ -50,7 +57,7 @@ src/meta_ads_mcp/
 
 | Component | Choice |
 |---|---|
-| Language | Python 3.12+ |
+| Language | Python 3.14+ |
 | MCP framework | mcp SDK v1 (FastMCP) |
 | Meta API SDK | facebook-business |
 | Data validation | Pydantic v2 |
@@ -78,7 +85,7 @@ Agency use case requires managing multiple client ad accounts. Every tool accept
 
 ## Scope Boundaries
 
-### Out of scope for v1
+### Out of scope (current)
 - Conversions API (CAPI)
 - Product Catalog management
 - Lead form management
@@ -86,55 +93,62 @@ Agency use case requires managing multiple client ad accounts. Every tool accept
 - Instagram-specific APIs (beyond what's exposed through Ads API)
 - SSE transport (stdio only for local hosting)
 
-## Planned Tools (~23 tools across 7 categories)
+## Tools (35 across 7 categories)
 
-### Accounts (3)
+### Accounts (2)
 | Tool | Description |
 |---|---|
 | `get_ad_accounts` | List all accessible ad accounts for the authenticated user |
 | `get_account_info` | Get detailed info for a specific ad account |
-| `get_account_insights` | Get account-level performance metrics |
 
-### Campaigns (4)
+### Campaigns (5)
 | Tool | Description |
 |---|---|
 | `list_campaigns` | List campaigns with filtering by status |
 | `get_campaign` | Get detailed campaign info including settings |
 | `create_campaign` | Create a new campaign (defaults to PAUSED) |
 | `update_campaign` | Update campaign name, budget, status, or schedule |
+| `get_campaign_diagnostics` | Campaign-level diagnostic scores |
 
-### Ad Sets (4)
+### Ad Sets (5)
 | Tool | Description |
 |---|---|
 | `list_ad_sets` | List ad sets with optional campaign filter |
 | `get_ad_set` | Get detailed ad set info including targeting |
 | `create_ad_set` | Create a new ad set with targeting and budget |
 | `update_ad_set` | Update ad set targeting, budget, status, or schedule |
+| `get_ad_set_diagnostics` | Ad set quality/engagement/conversion scores |
 
-### Ads (4)
+### Ads (5)
 | Tool | Description |
 |---|---|
 | `list_ads` | List ads with optional ad set or campaign filter |
 | `get_ad` | Get detailed ad info including creative reference |
 | `create_ad` | Create a new ad with creative reference |
-| `update_ad_status` | Pause, activate, or archive an ad |
+| `update_ad` | Update ad status, name, or creative |
+| `get_ad_diagnostics` | Ad relevance diagnostics |
 
-### Insights (4)
+### Insights (5)
 | Tool | Description |
 |---|---|
 | `get_insights` | Flexible insights query with date range, breakdowns, and level |
 | `get_campaign_insights` | Campaign performance with period comparison |
+| `get_account_insights` | Get account-level performance metrics |
 | `compare_performance` | Compare entities side-by-side |
 | `get_breakdown_report` | Age, gender, placement, or device breakdowns |
 
-### Creatives (2)
+### Creatives (4)
 | Tool | Description |
 |---|---|
 | `list_creatives` | List ad creatives for an account |
 | `get_creative` | Get creative details including thumbnail URL and body |
+| `create_ad_creative` | Create a new ad creative with dry_run support |
+| `update_ad_creative` | Update creative fields |
 
-### Audiences (2)
+### Audiences (4)
 | Tool | Description |
 |---|---|
 | `list_audiences` | List custom and lookalike audiences |
 | `get_audience` | Get audience details including size and status |
+| `create_custom_audience` | Create website/app/customer file audience |
+| `create_lookalike_audience` | Create lookalike from source audience |

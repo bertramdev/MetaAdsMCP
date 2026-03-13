@@ -110,6 +110,12 @@ class CampaignModel(BaseModel):
     stop_time: str = ""
     created_time: str = ""
     updated_time: str = ""
+    bid_strategy: str = ""
+    spend_cap: str = "0"
+    pacing_type: list[str] = []
+    buying_type: str = ""
+    special_ad_categories: list[str] = []
+    configured_status: str = ""
 
     @property
     def daily_budget_formatted(self) -> str:
@@ -141,6 +147,17 @@ class CampaignModel(BaseModel):
             return f"${cents / 100:,.2f}"
         except (ValueError, TypeError):
             return self.budget_remaining
+
+    @property
+    def spend_cap_formatted(self) -> str:
+        """Format spend cap from cents string to dollar display."""
+        try:
+            cents = int(self.spend_cap)
+            if cents == 0:
+                return "Not set"
+            return f"${cents / 100:,.2f}"
+        except (ValueError, TypeError):
+            return self.spend_cap
 
 
 class AdSetModel(BaseModel):
@@ -177,6 +194,14 @@ class AdSetModel(BaseModel):
     targeting: dict[str, Any] = {}
     start_time: str = ""
     end_time: str = ""
+    bid_amount: str = "0"
+    bid_strategy: str = ""
+    destination_type: str = ""
+    frequency_control_specs: list[dict[str, Any]] = []
+    attribution_spec: list[dict[str, Any]] = []
+    is_dynamic_creative: bool = False
+    optimization_sub_event: str = ""
+    pacing_type: list[str] = []
 
     @property
     def daily_budget_formatted(self) -> str:
@@ -208,6 +233,30 @@ class AdSetModel(BaseModel):
             return f"${cents / 100:,.2f}"
         except (ValueError, TypeError):
             return self.budget_remaining
+
+    @property
+    def bid_amount_formatted(self) -> str:
+        """Format bid amount from cents string to dollar display."""
+        try:
+            cents = int(self.bid_amount)
+            if cents == 0:
+                return "Not set"
+            return f"${cents / 100:,.2f}"
+        except (ValueError, TypeError):
+            return self.bid_amount
+
+    @property
+    def frequency_cap_summary(self) -> str:
+        """Generate a human-readable summary of frequency capping settings."""
+        if not self.frequency_control_specs:
+            return "No frequency cap"
+        parts: list[str] = []
+        for spec in self.frequency_control_specs:
+            event = spec.get("event", "IMPRESSIONS")
+            interval = spec.get("interval_days", 0)
+            max_freq = spec.get("max_frequency", 0)
+            parts.append(f"{max_freq} {event.lower()} per {interval} days")
+        return "; ".join(parts)
 
     @property
     def targeting_summary(self) -> str:
@@ -257,6 +306,10 @@ class AdModel(BaseModel):
     creative: dict[str, Any] = {}
     created_time: str = ""
     updated_time: str = ""
+    configured_status: str = ""
+    tracking_specs: list[dict[str, Any]] = []
+    conversion_specs: list[dict[str, Any]] = []
+    preview_shareable_link: str = ""
 
     @property
     def creative_id(self) -> str:
@@ -276,6 +329,10 @@ class AdCreativeModel(BaseModel):
         thumbnail_url: URL of the creative thumbnail.
         call_to_action_type: CTA button type (e.g., LEARN_MORE).
         link_url: Destination URL for the creative.
+        status: The creative status.
+        object_story_spec: Object story specification dictionary.
+        url_tags: URL tags for tracking.
+        image_hash: Hash of the creative image.
     """
 
     model_config = ConfigDict(extra="ignore")
@@ -288,6 +345,34 @@ class AdCreativeModel(BaseModel):
     thumbnail_url: str = ""
     call_to_action_type: str = ""
     link_url: str = ""
+    status: str = ""
+    object_story_spec: dict[str, Any] = {}
+    url_tags: str = ""
+    image_hash: str = ""
+
+    @property
+    def object_story_summary(self) -> str:
+        """Extract a human-readable summary from the object story spec."""
+        if not self.object_story_spec:
+            return "No object story"
+        parts: list[str] = []
+        page_id = self.object_story_spec.get("page_id", "")
+        if page_id:
+            parts.append(f"Page: {page_id}")
+        link_data = self.object_story_spec.get("link_data", {})
+        if link_data:
+            link = link_data.get("link", "")
+            message = link_data.get("message", "")
+            if link:
+                parts.append(f"Link: {link}")
+            if message:
+                parts.append(
+                    f"Message: {message[:50]}{'...' if len(message) > 50 else ''}"
+                )
+        video_data = self.object_story_spec.get("video_data", {})
+        if video_data:
+            parts.append("Type: Video")
+        return "; ".join(parts) if parts else "Custom object story"
 
 
 class InsightRow(BaseModel):
@@ -389,6 +474,14 @@ class CustomAudienceModel(BaseModel):
         delivery_status: Delivery status dictionary.
         operation_status: Operation status dictionary.
         description: Audience description.
+        lookalike_spec: Lookalike audience specification dictionary.
+        rule: Audience rule definition.
+        data_source: Data source specification dictionary.
+        retention_days: Audience retention period in days.
+        is_value_based: Whether this is a value-based audience.
+        sharing_status: Audience sharing status.
+        time_created: Audience creation timestamp.
+        time_updated: Audience last update timestamp.
     """
 
     model_config = ConfigDict(extra="ignore")
@@ -401,6 +494,14 @@ class CustomAudienceModel(BaseModel):
     delivery_status: dict[str, Any] = {}
     operation_status: dict[str, Any] = {}
     description: str = ""
+    lookalike_spec: dict[str, Any] = {}
+    rule: dict[str, Any] = {}
+    data_source: dict[str, Any] = {}
+    retention_days: int = 0
+    is_value_based: bool = False
+    sharing_status: str = ""
+    time_created: str = ""
+    time_updated: str = ""
 
     @property
     def size_display(self) -> str:
@@ -412,3 +513,103 @@ class CustomAudienceModel(BaseModel):
         if lower == upper:
             return f"{lower:,}"
         return f"{lower:,} - {upper:,}"
+
+    @property
+    def lookalike_summary(self) -> str:
+        """Generate a human-readable summary of lookalike spec."""
+        if not self.lookalike_spec:
+            return "Not a lookalike audience"
+        country = self.lookalike_spec.get("country", "")
+        ratio = self.lookalike_spec.get("ratio", 0)
+        origin_id = self.lookalike_spec.get("origin", [{}])
+        origin_name = ""
+        if isinstance(origin_id, list) and origin_id:
+            origin_name = origin_id[0].get("name", "")
+        parts: list[str] = []
+        if country:
+            parts.append(f"Country: {country}")
+        if ratio:
+            parts.append(f"Ratio: {ratio:.0%}")
+        if origin_name:
+            parts.append(f"Source: {origin_name}")
+        return "; ".join(parts) if parts else "Lookalike audience"
+
+    @property
+    def data_source_summary(self) -> str:
+        """Generate a human-readable summary of the data source."""
+        if not self.data_source:
+            return "No data source"
+        source_type = self.data_source.get("type", "")
+        sub_type = self.data_source.get("sub_type", "")
+        parts: list[str] = []
+        if source_type:
+            parts.append(f"Type: {source_type}")
+        if sub_type:
+            parts.append(f"Sub-type: {sub_type}")
+        return "; ".join(parts) if parts else "Custom data source"
+
+
+class CampaignDiagnosticsModel(BaseModel):
+    """Diagnostics for a campaign including issues and recommendations.
+
+    Attributes:
+        id: The campaign ID.
+        name: The campaign name.
+        status: The campaign status.
+        issues_info: List of issue dictionaries with level and summary.
+        recommendations: List of recommendation dictionaries.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str = ""
+    name: str = ""
+    status: str = ""
+    issues_info: list[dict[str, Any]] = []
+    recommendations: list[dict[str, Any]] = []
+
+
+class AdSetDiagnosticsModel(BaseModel):
+    """Diagnostics for an ad set including issues, recommendations, and learning stage.
+
+    Attributes:
+        id: The ad set ID.
+        name: The ad set name.
+        status: The ad set status.
+        issues_info: List of issue dictionaries with level and summary.
+        recommendations: List of recommendation dictionaries.
+        learning_stage_info: Learning stage status dictionary.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str = ""
+    name: str = ""
+    status: str = ""
+    issues_info: list[dict[str, Any]] = []
+    recommendations: list[dict[str, Any]] = []
+    learning_stage_info: dict[str, Any] = {}
+
+
+class AdDiagnosticsModel(BaseModel):
+    """Diagnostics for an ad including review feedback, delivery checks, and issues.
+
+    Attributes:
+        id: The ad ID.
+        name: The ad name.
+        status: The ad status.
+        ad_review_feedback: Ad review feedback dictionary.
+        failed_delivery_checks: List of failed delivery check dictionaries.
+        issues_info: List of issue dictionaries with level and summary.
+        recommendations: List of recommendation dictionaries.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str = ""
+    name: str = ""
+    status: str = ""
+    ad_review_feedback: dict[str, Any] = {}
+    failed_delivery_checks: list[dict[str, Any]] = []
+    issues_info: list[dict[str, Any]] = []
+    recommendations: list[dict[str, Any]] = []
