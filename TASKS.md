@@ -97,11 +97,11 @@ GitHub Project: [Meta Ads MCP](https://github.com/users/tomleelong/projects/2)
 
 ## Phase 4: Polish
 
-- [ ] #33 Comprehensive error handling for Meta API errors (rate limits, permissions, invalid params)
-- [ ] #34 Pagination support across all list tools
-- [ ] #35 Date range presets for insights
-- [ ] #36 End-to-end testing (Claude Desktop config, MCP Inspector)
-- [ ] #37 README finalization with usage examples
+- [x] #33 Comprehensive error handling for Meta API errors (rate limits, permissions, invalid params)
+- [ ] #34 Pagination support across all list tools (skipped)
+- [x] #35 Date range presets for insights
+- [x] #36 End-to-end testing (Claude Desktop config, MCP Inspector)
+- [x] #37 README finalization with usage examples
 
 ## Backlog / Future
 
