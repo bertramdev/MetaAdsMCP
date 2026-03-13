@@ -6,9 +6,9 @@ A locally-hosted MCP server for managing Meta (Facebook) Ads across multiple cli
 
 - Browse and inspect ad account structure (campaigns, ad sets, ads)
 - Query performance insights with flexible date ranges and breakdowns
-- Create and manage campaigns, ad sets, and ads
+- Create and manage campaigns, ad sets, ads, creatives, and audiences
+- Diagnose delivery issues with campaign, ad set, and ad diagnostics
 - Compare performance across entities side-by-side
-- View creatives and audiences
 - Multi-account support for agency workflows
 - All output formatted as markdown for LLM readability
 
@@ -53,7 +53,7 @@ If you don't have Meta developer credentials yet, follow these steps:
 ### 4. Exchange for a Long-Lived Token (60 days)
 
 ```bash
-curl -X GET "https://graph.facebook.com/v21.0/oauth/access_token?\
+curl -X GET "https://graph.facebook.com/v25.0/oauth/access_token?\
 grant_type=fb_exchange_token&\
 client_id=YOUR_APP_ID&\
 client_secret=YOUR_APP_SECRET&\
@@ -78,7 +78,7 @@ For a non-expiring token suitable for production use:
 | Permission | Purpose |
 |---|---|
 | `ads_read` | Read campaigns, ad sets, ads, insights, audiences, creatives |
-| `ads_management` | Create and update campaigns, ad sets, ads |
+| `ads_management` | Create and update campaigns, ad sets, ads, creatives, audiences |
 
 ## Configuration
 
@@ -96,7 +96,7 @@ cp .env.example .env
 | `META_APP_ID` | Yes | — | Meta App ID from app dashboard |
 | `META_APP_SECRET` | Yes | — | Meta App Secret from app dashboard |
 | `META_DEFAULT_AD_ACCOUNT_ID` | No | — | Default ad account ID (with `act_` prefix) |
-| `META_API_VERSION` | No | `v21.0` | Meta Graph API version |
+| `META_API_VERSION` | No | `v25.0` | Meta Graph API version |
 
 ## Usage
 
@@ -138,58 +138,120 @@ Add to your project's `.mcp.json`:
 }
 ```
 
-## Available Tools
+## Available Tools (35)
 
-### Accounts
+### Accounts (2)
 | Tool | Description |
 |---|---|
 | `get_ad_accounts` | List all accessible ad accounts |
 | `get_account_info` | Get detailed info for a specific ad account |
-| `get_account_insights` | Get account-level performance metrics |
 
-### Campaigns
+### Campaigns (5)
 | Tool | Description |
 |---|---|
 | `list_campaigns` | List campaigns with status filtering |
 | `get_campaign` | Get detailed campaign info |
 | `create_campaign` | Create a new campaign (defaults to PAUSED) |
 | `update_campaign` | Update campaign name, budget, status, or schedule |
+| `get_campaign_diagnostics` | Diagnose delivery issues and get recommendations |
 
-### Ad Sets
+### Ad Sets (5)
 | Tool | Description |
 |---|---|
 | `list_ad_sets` | List ad sets with optional campaign filter |
 | `get_ad_set` | Get detailed ad set info including targeting |
 | `create_ad_set` | Create ad set with targeting, budget, schedule |
 | `update_ad_set` | Update ad set settings |
+| `get_ad_set_diagnostics` | Diagnose issues with learning stage info |
 
-### Ads
+### Ads (5)
 | Tool | Description |
 |---|---|
 | `list_ads` | List ads with optional filters |
 | `get_ad` | Get detailed ad info with creative reference |
 | `create_ad` | Create a new ad with creative reference |
 | `update_ad_status` | Pause, activate, or archive an ad |
+| `get_ad_diagnostics` | Review feedback, delivery checks, and issues |
 
-### Insights
+### Insights (5)
 | Tool | Description |
 |---|---|
 | `get_insights` | Flexible insights query with date range, breakdowns, level |
+| `get_account_insights` | Account-level performance summary |
 | `get_campaign_insights` | Campaign performance with period comparison |
 | `compare_performance` | Compare entities side-by-side |
 | `get_breakdown_report` | Age, gender, placement, or device breakdowns |
 
-### Creatives
+### Creatives (4)
 | Tool | Description |
 |---|---|
 | `list_creatives` | List ad creatives for an account |
 | `get_creative` | Get creative details including thumbnail and body |
+| `create_ad_creative` | Create a link ad creative with page, image, CTA |
+| `update_ad_creative` | Update creative name, URL tags, or status |
 
-### Audiences
+### Audiences (4)
 | Tool | Description |
 |---|---|
 | `list_audiences` | List custom and lookalike audiences |
 | `get_audience` | Get audience details including size and status |
+| `create_custom_audience` | Create website, customer list, or app audiences |
+| `create_lookalike_audience` | Create a lookalike from an existing audience |
+
+## Safety Patterns
+
+All write operations follow these safety conventions:
+
+- **PAUSED by default** — newly created campaigns, ad sets, and ads start as PAUSED
+- **Dry run support** — pass `dry_run=True` to validate parameters without making changes
+- **Archive, not delete** — use status `ARCHIVED` instead of deleting entities
+- **Budget display** — update operations show before/after values for budget changes
+- **Budgets in dollars** — pass budgets as dollar strings (e.g., `"50.00"`); conversion to cents is handled internally
+
+## Troubleshooting
+
+Common Meta API errors and how to resolve them:
+
+| Error Code | Cause | Fix |
+|---|---|---|
+| 17, 32, 613 | Rate limit exceeded | Wait a few minutes and retry |
+| 190 | Token expired or invalid | Generate a new access token |
+| 200, 10 | Insufficient permissions | Ensure token has `ads_read` and `ads_management` |
+| 100 | Invalid parameter | Check parameter values and formats |
+| 2, 4 | Temporary Meta API issue | Retry after a few minutes |
+
+When errors occur, the server includes the error code and an actionable suggestion in the output.
+
+## Architecture
+
+```
+src/meta_ads_mcp/
+  __init__.py
+  __main__.py          # Entry point
+  server.py            # FastMCP server with lifespan management
+  config.py            # Environment-based configuration
+  client.py            # Async Meta API client (single SDK interface)
+  models.py            # Pydantic v2 models for all entity types
+  formatting.py        # Markdown formatters for LLM output
+  tools/
+    __init__.py        # get_client() context helper
+    _write_helpers.py  # Shared write utilities (budget, validation, etc.)
+    _insights_helpers.py  # Date preset resolution, period comparison
+    accounts.py        # Account listing and info
+    campaigns.py       # Campaign CRUD + diagnostics
+    adsets.py          # Ad set CRUD + diagnostics
+    ads.py             # Ad CRUD + diagnostics
+    insights.py        # Performance reporting and analytics
+    creatives.py       # Creative CRUD
+    audiences.py       # Audience creation and listing
+```
+
+Key design decisions:
+- **Tools return markdown** — never raw JSON or SDK objects
+- **Single API client** — `MetaAdsClient` is the only SDK interface; tools never call the SDK directly
+- **Async wrapping** — `asyncio.to_thread()` wraps synchronous SDK calls
+- **Pydantic models** — intermediate layer between SDK responses and formatted output
+- **Multi-account** — tools accept `account_id`; server has a configurable default
 
 ## Example Queries
 
@@ -197,11 +259,15 @@ Once configured, you can ask Claude things like:
 
 - "Show me all active campaigns for account act_123456789"
 - "What's the ROAS for Campaign X over the last 30 days?"
-- "Compare performance between Campaign A and Campaign B this month"
+- "Compare performance between Campaign A and Campaign B this quarter"
 - "Break down ad set performance by age and gender"
 - "Create a new traffic campaign called 'Spring Sale 2026' with a $50/day budget"
 - "Pause all ads in the 'Test Campaign' ad set"
 - "List all custom audiences with more than 10,000 people"
+- "What diagnostics issues does my campaign have?"
+- "Create a lookalike audience based on my website visitors in the US"
+- "Create a link ad creative with a SHOP_NOW CTA"
+- "Show this quarter's insights compared to last quarter"
 
 ## Development
 
@@ -221,6 +287,8 @@ poetry run black .
 # Type check
 poetry run mypy src/
 ```
+
+See [docs/testing.md](docs/testing.md) for the full testing guide including live tests and MCP Inspector usage.
 
 ## Testing with MCP Inspector
 
