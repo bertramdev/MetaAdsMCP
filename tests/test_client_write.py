@@ -272,6 +272,24 @@ class TestUpdateAdSet:
         assert params["daily_budget"] == 7500
 
     @pytest.mark.asyncio
+    async def test_dry_run(self, client: MetaAdsClient) -> None:
+        """Dry run adds validate_only."""
+        with patch("meta_ads_mcp.client.AdSet") as MockAdSet:
+            mock_adset = MagicMock()
+            mock_adset.api_update.return_value = FakeSDKObject({})
+            MockAdSet.return_value = mock_adset
+
+            await client.update_ad_set(
+                ad_set_id="adset_1",
+                name="Test",
+                dry_run=True,
+            )
+
+        call_params = mock_adset.api_update.call_args
+        params = call_params.kwargs.get("params") or call_params[1]["params"]
+        assert params["execution_options"] == ["validate_only"]
+
+    @pytest.mark.asyncio
     async def test_api_error(self, client: MetaAdsClient) -> None:
         """API errors are converted to MetaAdsError."""
         error = _make_sdk_error("Invalid ad set", code=100)

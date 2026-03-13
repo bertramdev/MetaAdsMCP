@@ -1,6 +1,5 @@
 """Shared utilities for write tools."""
 
-import asyncio
 import json
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -125,14 +124,18 @@ async def fetch_and_update(
     fetch_coro: Any,
     update_coro: Any,
 ) -> dict[str, Any]:
-    """Run a fetch (for before/after display) concurrently with an update.
+    """Fetch current state before applying an update.
+
+    The fetch runs first to guarantee the returned dict reflects pre-update
+    values, which are used for before/after comparisons in tool output.
 
     Args:
         fetch_coro: Coroutine that fetches current entity state.
         update_coro: Coroutine that performs the update.
 
     Returns:
-        The fetched current state dictionary.
+        The fetched current state dictionary (pre-update).
     """
-    current, _ = await asyncio.gather(fetch_coro, update_coro)
+    current = await fetch_coro
+    await update_coro
     return current  # type: ignore[no-any-return]
