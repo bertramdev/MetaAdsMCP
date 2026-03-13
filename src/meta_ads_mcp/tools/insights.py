@@ -37,8 +37,9 @@ async def get_insights(
 
     Args:
         account_id: Ad account ID (e.g., act_123456789).
-        date_preset: Date preset (today, yesterday, last_7d,
-            last_14d, last_30d, this_month, last_month).
+        date_preset: Date preset (today, yesterday, last_3d, last_7d,
+            last_14d, last_30d, last_90d, this_month, last_month,
+            this_quarter, last_quarter, this_year, last_year).
         start_date: Start date YYYY-MM-DD, use with end_date.
         end_date: End date YYYY-MM-DD, use with start_date.
         level: Aggregation level: account, campaign, adset, ad.
@@ -84,7 +85,7 @@ async def get_account_insights(
 
     Args:
         account_id: Ad account ID (e.g., act_123456789).
-        date_preset: Date preset (e.g., last_7d, last_30d).
+        date_preset: Date preset (e.g., last_7d, last_30d, this_quarter).
     """
     return await get_insights(
         ctx, account_id=account_id, date_preset=date_preset, level="account"
@@ -106,7 +107,7 @@ async def get_campaign_insights(
 
     Args:
         campaign_id: The campaign ID to get insights for.
-        date_preset: Date preset (e.g., last_7d, last_30d).
+        date_preset: Date preset (e.g., last_7d, last_30d, this_quarter).
         compare: Compare current to previous period.
         account_id: Ad account ID (e.g., act_123456789).
     """
@@ -171,7 +172,7 @@ async def compare_performance(
     Args:
         entity_ids: Comma-separated IDs (e.g., "123,456,789").
         entity_type: campaign, adset, or ad. Default campaign.
-        date_preset: Date preset (e.g., last_7d, last_30d).
+        date_preset: Date preset (e.g., last_7d, last_30d, this_quarter).
         account_id: Ad account ID (e.g., act_123456789).
     """
     try:
@@ -236,7 +237,7 @@ async def get_breakdown_report(
         breakdown: Breakdown dimension (age, gender, country,
             placement, device_platform, publisher_platform).
         account_id: Ad account ID (e.g., act_123456789).
-        date_preset: Date preset (e.g., last_7d, last_30d).
+        date_preset: Date preset (e.g., last_7d, last_30d, this_quarter).
         level: Aggregation level: account, campaign, adset, ad.
         limit: Maximum rows to return. Default 50.
     """
