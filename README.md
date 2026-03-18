@@ -297,4 +297,4 @@ npx @modelcontextprotocol/inspector uv run python -m meta_ads_mcp
 
 ## License
 
-MIT
+Apache-2.0

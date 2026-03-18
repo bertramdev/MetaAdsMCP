@@ -3,7 +3,7 @@ name = "meta-ads-mcp"
 version = "0.1.0"
 description = "MCP server wrapping the Meta (Facebook) Ads API for agency/multi-client ad management"
 authors = [{name = "Tom Long"}]
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
