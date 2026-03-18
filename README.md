@@ -21,7 +21,7 @@ A locally-hosted MCP server for managing Meta (Facebook) Ads across multiple cli
 ## Installation
 
 ```bash
-git clone https://github.com/tlong/MetaAdsMCP.git
+git clone https://github.com/tomleelong/MetaAdsMCP.git
 cd MetaAdsMCP
 poetry install
 ```
