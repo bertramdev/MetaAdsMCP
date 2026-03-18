@@ -15,7 +15,7 @@ A locally-hosted MCP server for managing Meta (Facebook) Ads across multiple cli
 ## Prerequisites
 
 - Python 3.12+
-- [Poetry](https://python-poetry.org/docs/#installation)
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - Meta developer account with Marketing API access (see setup guide below)
 
 ## Installation
@@ -23,7 +23,7 @@ A locally-hosted MCP server for managing Meta (Facebook) Ads across multiple cli
 ```bash
 git clone https://github.com/tomleelong/MetaAdsMCP.git
 cd MetaAdsMCP
-poetry install
+uv sync
 ```
 
 ## Getting a Meta Access Token
@@ -108,9 +108,8 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 {
   "mcpServers": {
     "meta-ads": {
-      "command": "poetry",
-      "args": ["run", "python", "-m", "meta_ads_mcp"],
-      "cwd": "/path/to/MetaAdsMCP",
+      "command": "uv",
+      "args": ["--directory", "/path/to/MetaAdsMCP", "run", "python", "-m", "meta_ads_mcp"],
       "env": {
         "META_ACCESS_TOKEN": "your_token_here",
         "META_APP_ID": "your_app_id",
@@ -130,7 +129,7 @@ Add to your project's `.mcp.json`:
 {
   "mcpServers": {
     "meta-ads": {
-      "command": "poetry",
+      "command": "uv",
       "args": ["run", "python", "-m", "meta_ads_mcp"],
       "cwd": "/path/to/MetaAdsMCP"
     }
@@ -273,19 +272,19 @@ Once configured, you can ask Claude things like:
 
 ```bash
 # Run tests
-poetry run pytest
+uv run pytest
 
 # Run tests with coverage
-poetry run pytest --cov=meta_ads_mcp
+uv run pytest --cov=meta_ads_mcp
 
 # Lint
-poetry run ruff check .
+uv run ruff check .
 
 # Format
-poetry run black .
+uv run black .
 
 # Type check
-poetry run mypy src/
+uv run mypy src/
 ```
 
 See [docs/testing.md](docs/testing.md) for the full testing guide including live tests and MCP Inspector usage.
@@ -293,7 +292,7 @@ See [docs/testing.md](docs/testing.md) for the full testing guide including live
 ## Testing with MCP Inspector
 
 ```bash
-npx @modelcontextprotocol/inspector poetry run python -m meta_ads_mcp
+npx @modelcontextprotocol/inspector uv run python -m meta_ads_mcp
 ```
 
 ## License

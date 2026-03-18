@@ -7,19 +7,19 @@ This guide covers how to test the Meta Ads MCP server at every level: unit tests
 Run the full test suite:
 
 ```bash
-poetry run pytest
+uv run pytest
 ```
 
 With coverage:
 
 ```bash
-poetry run pytest --cov=meta_ads_mcp --cov-report=term-missing
+uv run pytest --cov=meta_ads_mcp --cov-report=term-missing
 ```
 
 Run a specific test file:
 
 ```bash
-poetry run pytest tests/test_tools_campaigns.py -v
+uv run pytest tests/test_tools_campaigns.py -v
 ```
 
 ## Integration Workflow Tests
@@ -27,7 +27,7 @@ poetry run pytest tests/test_tools_campaigns.py -v
 `tests/test_integration_workflows.py` contains mocked multi-step workflow tests that verify tool interactions without hitting the real API:
 
 ```bash
-poetry run pytest tests/test_integration_workflows.py -v
+uv run pytest tests/test_integration_workflows.py -v
 ```
 
 These cover:
@@ -41,7 +41,7 @@ These cover:
 `tests/test_live.py` runs against the real Meta Ads API. These require valid credentials in `.env` and are automatically skipped in CI.
 
 ```bash
-poetry run pytest tests/test_live.py -v -s
+uv run pytest tests/test_live.py -v -s
 ```
 
 Prerequisites:
@@ -56,7 +56,7 @@ The [MCP Inspector](https://github.com/modelcontextprotocol/inspector) provides 
 ### Start the Inspector
 
 ```bash
-npx @modelcontextprotocol/inspector poetry run python -m meta_ads_mcp
+npx @modelcontextprotocol/inspector uv run python -m meta_ads_mcp
 ```
 
 This opens a browser at `http://localhost:5173` where you can:
@@ -91,9 +91,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "meta-ads": {
-      "command": "poetry",
-      "args": ["run", "python", "-m", "meta_ads_mcp"],
-      "cwd": "/path/to/MetaAdsMCP",
+      "command": "uv",
+      "args": ["--directory", "/path/to/MetaAdsMCP", "run", "python", "-m", "meta_ads_mcp"],
       "env": {
         "META_ACCESS_TOKEN": "your_token_here",
         "META_APP_ID": "your_app_id",
@@ -113,7 +112,7 @@ Add to your project's `.mcp.json`:
 {
   "mcpServers": {
     "meta-ads": {
-      "command": "poetry",
+      "command": "uv",
       "args": ["run", "python", "-m", "meta_ads_mcp"],
       "cwd": "/path/to/MetaAdsMCP"
     }
@@ -128,8 +127,8 @@ Credentials are loaded from the `.env` file in the MetaAdsMCP directory.
 Run all quality checks before submitting changes:
 
 ```bash
-poetry run ruff check .       # Lint
-poetry run black --check .    # Format check
-poetry run mypy src/          # Type check
-poetry run pytest             # Tests
+uv run ruff check .       # Lint
+uv run black --check .    # Format check
+uv run mypy src/          # Type check
+uv run pytest             # Tests
 ```

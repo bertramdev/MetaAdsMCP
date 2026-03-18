@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Meta Ads MCP server — a locally-hosted MCP server wrapping the Meta (Facebook) Ads API for agency/multi-client ad management. Built with Python 3.12+, FastMCP, facebook-business SDK, Pydantic v2, and Poetry.
+Meta Ads MCP server — a locally-hosted MCP server wrapping the Meta (Facebook) Ads API for agency/multi-client ad management. Built with Python 3.12+, FastMCP, facebook-business SDK, Pydantic v2, and uv.
 
 ## Architecture Rules
 
