@@ -105,7 +105,7 @@ GitHub Project: [Meta Ads MCP](https://github.com/users/tomleelong/projects/2)
 
 ## Backlog / Future
 
-- [ ] #40 Persistent Meta access token — long-lived token exchange and refresh
+- [x] #40 Persistent Meta access token — system user token (non-expiring)
 - [ ] Creative upload tools (image/video asset upload)
 - [ ] Bulk operations (batch status changes, batch budget updates)
 - [ ] Trend analysis / ROAS tracking tools
