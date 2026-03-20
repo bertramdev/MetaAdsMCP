@@ -14,7 +14,12 @@ from meta_ads_mcp.formatting import (
     format_write_result,
 )
 from meta_ads_mcp.models import CampaignDiagnosticsModel, CampaignModel
-from meta_ads_mcp.tools import get_client
+from meta_ads_mcp.tools import (
+    DESTRUCTIVE_ANNOTATIONS,
+    READ_ANNOTATIONS,
+    WRITE_ANNOTATIONS,
+    get_client,
+)
 from meta_ads_mcp.tools._write_helpers import (
     cents_display,
     dollars_to_cents,
@@ -319,8 +324,8 @@ def register(mcp: FastMCP) -> None:
     Args:
         mcp: The FastMCP server instance.
     """
-    mcp.tool()(list_campaigns)
-    mcp.tool()(get_campaign)
-    mcp.tool()(create_campaign)
-    mcp.tool()(update_campaign)
-    mcp.tool()(get_campaign_diagnostics)
+    mcp.tool(annotations=READ_ANNOTATIONS)(list_campaigns)
+    mcp.tool(annotations=READ_ANNOTATIONS)(get_campaign)
+    mcp.tool(annotations=WRITE_ANNOTATIONS)(create_campaign)
+    mcp.tool(annotations=DESTRUCTIVE_ANNOTATIONS)(update_campaign)
+    mcp.tool(annotations=READ_ANNOTATIONS)(get_campaign_diagnostics)
