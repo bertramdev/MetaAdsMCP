@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "meta-ads": {
-      "command": "uv",
-      "args": ["run", "python", "-m", "meta_ads_mcp"],
-      "cwd": "/Users/tlong/VSProjects/MCPs/MetaAdsMCP"
-    }
-  }
-}
