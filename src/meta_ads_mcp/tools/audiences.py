@@ -12,7 +12,7 @@ from meta_ads_mcp.formatting import (
     format_write_result,
 )
 from meta_ads_mcp.models import CustomAudienceModel
-from meta_ads_mcp.tools import get_client
+from meta_ads_mcp.tools import READ_ANNOTATIONS, WRITE_ANNOTATIONS, get_client
 from meta_ads_mcp.tools._write_helpers import format_write_error, parse_json_param
 
 
@@ -182,7 +182,7 @@ def register(mcp: FastMCP) -> None:
     Args:
         mcp: The FastMCP server instance.
     """
-    mcp.tool()(list_audiences)
-    mcp.tool()(get_audience)
-    mcp.tool()(create_custom_audience)
-    mcp.tool()(create_lookalike_audience)
+    mcp.tool(annotations=READ_ANNOTATIONS)(list_audiences)
+    mcp.tool(annotations=READ_ANNOTATIONS)(get_audience)
+    mcp.tool(annotations=WRITE_ANNOTATIONS)(create_custom_audience)
+    mcp.tool(annotations=WRITE_ANNOTATIONS)(create_lookalike_audience)

@@ -10,7 +10,7 @@ from meta_ads_mcp.formatting import (
     format_performance_comparison,
 )
 from meta_ads_mcp.models import InsightRow
-from meta_ads_mcp.tools import get_client
+from meta_ads_mcp.tools import READ_ANNOTATIONS, get_client
 from meta_ads_mcp.tools._insights_helpers import (
     VALID_BREAKDOWNS,
     get_previous_range,
@@ -277,8 +277,8 @@ def register(mcp: FastMCP) -> None:
     Args:
         mcp: The FastMCP server instance.
     """
-    mcp.tool()(get_insights)
-    mcp.tool()(get_account_insights)
-    mcp.tool()(get_campaign_insights)
-    mcp.tool()(compare_performance)
-    mcp.tool()(get_breakdown_report)
+    mcp.tool(annotations=READ_ANNOTATIONS)(get_insights)
+    mcp.tool(annotations=READ_ANNOTATIONS)(get_account_insights)
+    mcp.tool(annotations=READ_ANNOTATIONS)(get_campaign_insights)
+    mcp.tool(annotations=READ_ANNOTATIONS)(compare_performance)
+    mcp.tool(annotations=READ_ANNOTATIONS)(get_breakdown_report)

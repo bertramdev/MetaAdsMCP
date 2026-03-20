@@ -13,7 +13,12 @@ from meta_ads_mcp.formatting import (
     format_write_result,
 )
 from meta_ads_mcp.models import AdCreativeModel
-from meta_ads_mcp.tools import get_client
+from meta_ads_mcp.tools import (
+    DESTRUCTIVE_ANNOTATIONS,
+    READ_ANNOTATIONS,
+    WRITE_ANNOTATIONS,
+    get_client,
+)
 from meta_ads_mcp.tools._write_helpers import (
     fetch_and_update,
     format_write_error,
@@ -206,7 +211,7 @@ def register(mcp: FastMCP) -> None:
     Args:
         mcp: The FastMCP server instance.
     """
-    mcp.tool()(list_creatives)
-    mcp.tool()(get_creative)
-    mcp.tool()(create_ad_creative)
-    mcp.tool()(update_ad_creative)
+    mcp.tool(annotations=READ_ANNOTATIONS)(list_creatives)
+    mcp.tool(annotations=READ_ANNOTATIONS)(get_creative)
+    mcp.tool(annotations=WRITE_ANNOTATIONS)(create_ad_creative)
+    mcp.tool(annotations=DESTRUCTIVE_ANNOTATIONS)(update_ad_creative)
