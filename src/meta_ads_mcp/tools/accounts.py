@@ -5,7 +5,7 @@ from mcp.server.fastmcp import Context, FastMCP
 from meta_ads_mcp.client import MetaAdsError
 from meta_ads_mcp.formatting import format_account, format_account_list, format_error
 from meta_ads_mcp.models import AdAccountModel
-from meta_ads_mcp.tools import READ_ANNOTATIONS, get_client
+from meta_ads_mcp.tools import READ_ONLY, get_client
 
 
 async def get_ad_accounts(ctx: Context) -> str:
@@ -46,5 +46,5 @@ def register(mcp: FastMCP) -> None:
     Args:
         mcp: The FastMCP server instance.
     """
-    mcp.tool(annotations=READ_ANNOTATIONS)(get_ad_accounts)
-    mcp.tool(annotations=READ_ANNOTATIONS)(get_account_info)
+    mcp.tool(annotations=READ_ONLY)(get_ad_accounts)
+    mcp.tool(annotations=READ_ONLY)(get_account_info)
