@@ -15,9 +15,9 @@ from meta_ads_mcp.formatting import (
 )
 from meta_ads_mcp.models import AdDiagnosticsModel, AdModel
 from meta_ads_mcp.tools import (
-    DESTRUCTIVE_ANNOTATIONS,
-    READ_ANNOTATIONS,
-    WRITE_ANNOTATIONS,
+    CREATE,
+    DESTRUCTIVE,
+    READ_ONLY,
     get_client,
 )
 from meta_ads_mcp.tools._write_helpers import (
@@ -191,8 +191,8 @@ def register(mcp: FastMCP) -> None:
     Args:
         mcp: The FastMCP server instance.
     """
-    mcp.tool(annotations=READ_ANNOTATIONS)(list_ads)
-    mcp.tool(annotations=READ_ANNOTATIONS)(get_ad)
-    mcp.tool(annotations=WRITE_ANNOTATIONS)(create_ad)
-    mcp.tool(annotations=DESTRUCTIVE_ANNOTATIONS)(update_ad_status)
-    mcp.tool(annotations=READ_ANNOTATIONS)(get_ad_diagnostics)
+    mcp.tool(annotations=READ_ONLY)(list_ads)
+    mcp.tool(annotations=READ_ONLY)(get_ad)
+    mcp.tool(annotations=CREATE)(create_ad)
+    mcp.tool(annotations=DESTRUCTIVE)(update_ad_status)
+    mcp.tool(annotations=READ_ONLY)(get_ad_diagnostics)

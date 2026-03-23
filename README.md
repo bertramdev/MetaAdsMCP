@@ -137,7 +137,57 @@ Add to your project's `.mcp.json`:
 }
 ```
 
-## Available Tools (35)
+### Permissions
+
+All tools include [MCP tool annotations](https://modelcontextprotocol.io/docs/concepts/tool-annotations) (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) so clients can make informed permission decisions. However, Claude Code requires explicit allow rules — annotations alone don't auto-approve tools.
+
+**Within this project:** The project-level `.claude/settings.json` auto-allows read-only tools (`get_*`, `list_*`, `compare_performance`). Write tools require approval on each use.
+
+**From other projects:** Project-level permissions don't apply. To allow all tools globally, add to `~/.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__meta-ads__*"
+    ]
+  }
+}
+```
+
+Or for read-only tools only:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__meta-ads__get_*",
+      "mcp__meta-ads__list_*",
+      "mcp__meta-ads__compare_performance"
+    ]
+  }
+}
+```
+
+### Security Considerations
+
+This MCP server **cannot** modify account access, user permissions, login credentials, billing, or payment methods. There are no tools for account administration — a compromised server cannot lock anyone out of their account.
+
+**Worst-case impact if credentials are compromised:**
+
+| Risk | Details |
+|------|---------|
+| **Financial** | Creating campaigns/budgets could spend money once activated |
+| **Disruption** | Pausing or archiving campaigns, ad sets, or ads |
+| **Data exposure** | Reading account performance, targeting details, and audience information |
+
+Safety guards:
+- All new campaigns, ad sets, and ads default to **PAUSED** status
+- Write tools accept `dry_run=True` to validate without executing
+- No delete operations — use archive (`ARCHIVED` status) instead
+- Budget changes show before/after comparison in output
+
+## Available Tools (30)
 
 ### Accounts (2)
 | Tool | Description |

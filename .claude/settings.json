@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__meta-ads__get_*",
+      "mcp__meta-ads__list_*",
+      "mcp__meta-ads__compare_performance"
+    ]
+  }
+}
