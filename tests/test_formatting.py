@@ -4,9 +4,13 @@ from meta_ads_mcp.formatting import (
     format_account,
     format_account_list,
     format_ad,
+    format_ad_image,
+    format_ad_image_list,
     format_ad_list,
     format_ad_set,
     format_ad_set_list,
+    format_ad_video,
+    format_ad_video_list,
     format_audience,
     format_audience_list,
     format_campaign,
@@ -19,8 +23,10 @@ from meta_ads_mcp.formatting import (
 from meta_ads_mcp.models import (
     AdAccountModel,
     AdCreativeModel,
+    AdImageModel,
     AdModel,
     AdSetModel,
+    AdVideoModel,
     CampaignModel,
     CustomAudienceModel,
     InsightRow,
@@ -490,3 +496,91 @@ class TestErrorFormatter:
         result = format_error("Something went wrong")
         assert "## Error" in result
         assert "Something went wrong" in result
+
+
+class TestAdImageFormatter:
+    """Tests for ad image formatters."""
+
+    def test_format_ad_image(self) -> None:
+        """Image detail shows hash prominently."""
+        image = AdImageModel(
+            hash="abc123",
+            name="Banner",
+            width=1200,
+            height=628,
+            status="active",
+            url="https://example.com/img.jpg",
+        )
+        result = format_ad_image(image)
+        assert "abc123" in result
+        assert "Banner" in result
+        assert "1200x628" in result
+        assert "create_ad_creative" in result
+
+    def test_format_ad_image_unnamed(self) -> None:
+        """Image with no name shows Unnamed."""
+        image = AdImageModel(hash="xyz")
+        result = format_ad_image(image)
+        assert "Unnamed" in result
+
+    def test_format_ad_image_list(self) -> None:
+        """Image list table has correct columns."""
+        images = [
+            AdImageModel(
+                hash="h1", name="Img1", width=800, height=600, status="active"
+            ),
+            AdImageModel(
+                hash="h2", name="Img2", width=512, height=512, status="active"
+            ),
+        ]
+        result = format_ad_image_list(images)
+        assert "## Ad Images" in result
+        assert "h1" in result
+        assert "h2" in result
+        assert "800x600" in result
+
+    def test_format_ad_image_list_empty(self) -> None:
+        """Empty list returns message."""
+        assert "No ad images found" in format_ad_image_list([])
+
+
+class TestAdVideoFormatter:
+    """Tests for ad video formatters."""
+
+    def test_format_ad_video(self) -> None:
+        """Video detail shows ID prominently."""
+        video = AdVideoModel(
+            id="vid_123",
+            name="Promo",
+            title="Spring Sale",
+            length=65.0,
+            source="https://example.com/video.mp4",
+        )
+        result = format_ad_video(video)
+        assert "vid_123" in result
+        assert "Promo" in result
+        assert "1m 5s" in result
+        assert "object_story_spec" in result
+
+    def test_format_ad_video_unnamed(self) -> None:
+        """Video with no name or title shows Unnamed."""
+        video = AdVideoModel(id="vid_456")
+        result = format_ad_video(video)
+        assert "Unnamed" in result
+
+    def test_format_ad_video_list(self) -> None:
+        """Video list table has correct columns."""
+        videos = [
+            AdVideoModel(id="v1", name="Ad 1", title="Title 1", length=30.0),
+            AdVideoModel(id="v2", name="Ad 2", title="Title 2", length=90.0),
+        ]
+        result = format_ad_video_list(videos)
+        assert "## Ad Videos" in result
+        assert "v1" in result
+        assert "v2" in result
+        assert "30s" in result
+        assert "1m 30s" in result
+
+    def test_format_ad_video_list_empty(self) -> None:
+        """Empty list returns message."""
+        assert "No ad videos found" in format_ad_video_list([])

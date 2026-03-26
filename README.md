@@ -187,7 +187,7 @@ Safety guards:
 - No delete operations — use archive (`ARCHIVED` status) instead
 - Budget changes show before/after comparison in output
 
-## Available Tools (30)
+## Available Tools (36)
 
 ### Accounts (2)
 | Tool | Description |
@@ -246,6 +246,16 @@ Safety guards:
 | `get_audience` | Get audience details including size and status |
 | `create_custom_audience` | Create website, customer list, or app audiences |
 | `create_lookalike_audience` | Create a lookalike from an existing audience |
+
+### Assets (6)
+| Tool | Description |
+|---|---|
+| `upload_ad_image` | Upload an image file, returns hash for use in creatives |
+| `upload_ad_video` | Upload a video from local file or URL |
+| `list_ad_images` | List ad images for an account |
+| `get_ad_image` | Get image details by hash |
+| `list_ad_videos` | List ad videos for an account |
+| `get_ad_video` | Get video details by ID |
 
 ## Safety Patterns
 

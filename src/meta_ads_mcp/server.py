@@ -17,6 +17,7 @@ from meta_ads_mcp.tools import (
     accounts,
     ads,
     adsets,
+    assets,
     audiences,
     campaigns,
     creatives,
@@ -83,6 +84,7 @@ ads.register(mcp)
 insights.register(mcp)
 creatives.register(mcp)
 audiences.register(mcp)
+assets.register(mcp)
 
 
 def main() -> None:

@@ -8,8 +8,10 @@ from typing import Any
 from meta_ads_mcp.models import (
     AdAccountModel,
     AdCreativeModel,
+    AdImageModel,
     AdModel,
     AdSetModel,
+    AdVideoModel,
     CampaignModel,
     CustomAudienceModel,
     InsightRow,
@@ -276,6 +278,124 @@ def format_creative_list(creatives: list[AdCreativeModel]) -> str:
         link = c.link_url[:40] + "..." if len(c.link_url) > 40 else c.link_url
         lines.append(
             f"| {c.id} | {c.name} | {c.title} " f"| {c.call_to_action_type} | {link} |"
+        )
+    return "\n".join(lines)
+
+
+def format_ad_image(image: AdImageModel) -> str:
+    """Format a single ad image as markdown detail view.
+
+    Args:
+        image: The ad image model.
+
+    Returns:
+        Formatted markdown string with hash prominently displayed.
+    """
+    lines = [f"## Ad Image: {image.name or 'Unnamed'}", ""]
+    lines.append(f"- **Hash**: `{image.hash}`")
+    lines.append(f"- **ID**: {image.id}")
+    lines.append(f"- **Dimensions**: {image.dimensions_display}")
+    if image.original_width and image.original_height:
+        lines.append(
+            f"- **Original Dimensions**: {image.original_width}x{image.original_height}"
+        )
+    lines.append(f"- **Status**: {image.status}")
+    if image.url:
+        lines.append(f"- **URL**: {image.url}")
+    if image.url_128:
+        lines.append(f"- **Thumbnail**: {image.url_128}")
+    if image.permalink_url:
+        lines.append(f"- **Permalink**: {image.permalink_url}")
+    if image.created_time:
+        lines.append(f"- **Created**: {image.created_time}")
+    if image.updated_time:
+        lines.append(f"- **Updated**: {image.updated_time}")
+    lines.append("")
+    lines.append("> Use this hash with `create_ad_creative`'s `image_hash` parameter.")
+    return "\n".join(lines)
+
+
+def format_ad_image_list(images: list[AdImageModel]) -> str:
+    """Format a list of ad images as a markdown table.
+
+    Args:
+        images: List of ad image models.
+
+    Returns:
+        Formatted markdown table.
+    """
+    if not images:
+        return "No ad images found."
+
+    lines = [
+        "## Ad Images",
+        "",
+        "| Hash | Name | Dimensions | Status | Created |",
+        "|---|---|---|---|---|",
+    ]
+    for img in images:
+        lines.append(
+            f"| `{img.hash}` | {img.name or 'Unnamed'} | {img.dimensions_display} "
+            f"| {img.status} | {img.created_time} |"
+        )
+    return "\n".join(lines)
+
+
+def format_ad_video(video: AdVideoModel) -> str:
+    """Format a single ad video as markdown detail view.
+
+    Args:
+        video: The ad video model.
+
+    Returns:
+        Formatted markdown string with video ID prominently displayed.
+    """
+    lines = [f"## Ad Video: {video.name or video.title or 'Unnamed'}", ""]
+    lines.append(f"- **ID**: `{video.id}`")
+    if video.name:
+        lines.append(f"- **Name**: {video.name}")
+    if video.title:
+        lines.append(f"- **Title**: {video.title}")
+    if video.description:
+        lines.append(f"- **Description**: {video.description}")
+    lines.append(f"- **Duration**: {video.duration_display}")
+    if video.source:
+        lines.append(f"- **Source URL**: {video.source}")
+    if video.picture:
+        lines.append(f"- **Thumbnail**: {video.picture}")
+    if video.permalink_url:
+        lines.append(f"- **Permalink**: {video.permalink_url}")
+    if video.created_time:
+        lines.append(f"- **Created**: {video.created_time}")
+    if video.updated_time:
+        lines.append(f"- **Updated**: {video.updated_time}")
+    lines.append("")
+    lines.append("> Use this video ID in a video creative's `object_story_spec`.")
+    return "\n".join(lines)
+
+
+def format_ad_video_list(videos: list[AdVideoModel]) -> str:
+    """Format a list of ad videos as a markdown table.
+
+    Args:
+        videos: List of ad video models.
+
+    Returns:
+        Formatted markdown table.
+    """
+    if not videos:
+        return "No ad videos found."
+
+    lines = [
+        "## Ad Videos",
+        "",
+        "| ID | Name | Title | Duration | Created |",
+        "|---|---|---|---|---|",
+    ]
+    for v in videos:
+        lines.append(
+            f"| `{v.id}` | {v.name or 'N/A'} | {v.title or 'N/A'} "
+            f"| {v.duration_display} | {v.created_time} |"
         )
     return "\n".join(lines)
 

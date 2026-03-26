@@ -549,6 +549,93 @@ class CustomAudienceModel(BaseModel):
         return "; ".join(parts) if parts else "Custom data source"
 
 
+class AdImageModel(BaseModel):
+    """Model for a Meta Ad Image asset.
+
+    Attributes:
+        id: The image ID (composite format: account_id:hash).
+        hash: The image hash used for referencing in creatives.
+        name: The image name.
+        account_id: The owning ad account ID.
+        url: Full-size image URL.
+        url_128: 128px thumbnail URL.
+        width: Image width in pixels.
+        height: Image height in pixels.
+        original_width: Original image width before processing.
+        original_height: Original image height before processing.
+        status: Image status (active, deleted).
+        permalink_url: Permanent URL for the image.
+        created_time: Image upload time.
+        updated_time: Last update time.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str = ""
+    hash: str = ""
+    name: str = ""
+    account_id: str = ""
+    url: str = ""
+    url_128: str = ""
+    width: int = 0
+    height: int = 0
+    original_width: int = 0
+    original_height: int = 0
+    status: str = ""
+    permalink_url: str = ""
+    created_time: str = ""
+    updated_time: str = ""
+
+    @property
+    def dimensions_display(self) -> str:
+        """Format image dimensions as WxH string."""
+        if self.width and self.height:
+            return f"{self.width}x{self.height}"
+        return "Unknown"
+
+
+class AdVideoModel(BaseModel):
+    """Model for a Meta Ad Video asset.
+
+    Attributes:
+        id: The video ID.
+        name: The video name.
+        title: The video title.
+        description: The video description.
+        length: Video duration in seconds.
+        source: Video source URL.
+        picture: Video thumbnail URL.
+        permalink_url: Permanent URL for the video.
+        created_time: Video upload time.
+        updated_time: Last update time.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str = ""
+    name: str = ""
+    title: str = ""
+    description: str = ""
+    length: float = 0.0
+    source: str = ""
+    picture: str = ""
+    permalink_url: str = ""
+    created_time: str = ""
+    updated_time: str = ""
+
+    @property
+    def duration_display(self) -> str:
+        """Format video duration as human-readable string."""
+        if self.length <= 0:
+            return "Unknown"
+        total_seconds = int(self.length)
+        minutes = total_seconds // 60
+        seconds = total_seconds % 60
+        if minutes > 0:
+            return f"{minutes}m {seconds}s"
+        return f"{seconds}s"
+
+
 class CampaignDiagnosticsModel(BaseModel):
     """Diagnostics for a campaign including issues and recommendations.
 

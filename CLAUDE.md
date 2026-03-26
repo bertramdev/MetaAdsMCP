@@ -6,7 +6,7 @@ Meta Ads MCP server — a locally-hosted MCP server wrapping the Meta (Facebook)
 
 ## Architecture Rules
 
-- Tools live in `src/meta_ads_mcp/tools/` organized by entity: `accounts.py`, `campaigns.py`, `adsets.py`, `ads.py`, `insights.py`, `creatives.py`, `audiences.py`
+- Tools live in `src/meta_ads_mcp/tools/` organized by entity: `accounts.py`, `campaigns.py`, `adsets.py`, `ads.py`, `insights.py`, `creatives.py`, `audiences.py`, `assets.py`
 - Tools return **formatted markdown strings**, never raw JSON or SDK objects
 - `MetaAdsClient` in `client.py` is the single API interface — tools never call the facebook-business SDK directly
 - Use `asyncio.to_thread()` to wrap synchronous facebook-business SDK calls for async compatibility
