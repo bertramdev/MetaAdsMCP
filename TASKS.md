@@ -103,10 +103,19 @@ GitHub Project: [Meta Ads MCP](https://github.com/users/tomleelong/projects/2)
 - [x] #36 End-to-end testing (Claude Desktop config, MCP Inspector)
 - [x] #37 README finalization with usage examples
 
+## Phase 6: Asset Upload
+
+- [x] #65 `AdImageModel` and `AdVideoModel` Pydantic models
+- [x] #66 Client methods for image/video operations
+- [x] #67 Formatters for image/video display
+- [x] #68 Asset upload and listing tools (6 tools)
+- [x] #69 Unit tests for asset tools
+- [x] #70 Update project docs for Phase 6
+
 ## Backlog / Future
 
 - [x] #40 Persistent Meta access token — system user token (non-expiring)
-- [ ] Creative upload tools (image/video asset upload)
+- [x] Creative upload tools (image/video asset upload) — completed in Phase 6
 - [ ] Bulk operations (batch status changes, batch budget updates)
 - [ ] Trend analysis / ROAS tracking tools
 - [ ] SSE transport for remote hosting

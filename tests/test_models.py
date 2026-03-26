@@ -3,8 +3,10 @@
 from meta_ads_mcp.models import (
     AdAccountModel,
     AdCreativeModel,
+    AdImageModel,
     AdModel,
     AdSetModel,
+    AdVideoModel,
     CampaignModel,
     CustomAudienceModel,
     InsightRow,
@@ -557,3 +559,86 @@ class TestCustomAudienceModel:
         """data_source_summary falls back to custom label."""
         model = CustomAudienceModel(data_source={"unknown": "field"})
         assert model.data_source_summary == "Custom data source"
+
+
+class TestAdImageModel:
+    """Tests for AdImageModel."""
+
+    def test_construction(self) -> None:
+        """Model constructs from typical data."""
+        data = {
+            "id": "act_123:abc123",
+            "hash": "abc123",
+            "name": "Banner",
+            "width": 1200,
+            "height": 628,
+            "status": "active",
+        }
+        model = AdImageModel(**data)
+        assert model.hash == "abc123"
+        assert model.width == 1200
+
+    def test_defaults(self) -> None:
+        """All fields default to sensible values."""
+        model = AdImageModel()
+        assert model.id == ""
+        assert model.hash == ""
+        assert model.width == 0
+        assert model.height == 0
+
+    def test_extra_ignore(self) -> None:
+        """Extra fields from API are silently ignored."""
+        model = AdImageModel(id="img_1", unknown_field="surprise")
+        assert model.id == "img_1"
+
+    def test_dimensions_display(self) -> None:
+        """dimensions_display formats WxH."""
+        model = AdImageModel(width=1200, height=628)
+        assert model.dimensions_display == "1200x628"
+
+    def test_dimensions_display_unknown(self) -> None:
+        """dimensions_display returns Unknown when zero."""
+        model = AdImageModel()
+        assert model.dimensions_display == "Unknown"
+
+
+class TestAdVideoModel:
+    """Tests for AdVideoModel."""
+
+    def test_construction(self) -> None:
+        """Model constructs from typical data."""
+        data = {
+            "id": "vid_123",
+            "name": "Promo",
+            "title": "Spring Sale",
+            "length": 65.5,
+        }
+        model = AdVideoModel(**data)
+        assert model.id == "vid_123"
+        assert model.length == 65.5
+
+    def test_defaults(self) -> None:
+        """All fields default to sensible values."""
+        model = AdVideoModel()
+        assert model.id == ""
+        assert model.length == 0.0
+
+    def test_extra_ignore(self) -> None:
+        """Extra fields from API are silently ignored."""
+        model = AdVideoModel(id="vid_1", unknown_field="surprise")
+        assert model.id == "vid_1"
+
+    def test_duration_display_minutes(self) -> None:
+        """duration_display formats minutes and seconds."""
+        model = AdVideoModel(length=65.0)
+        assert model.duration_display == "1m 5s"
+
+    def test_duration_display_seconds_only(self) -> None:
+        """duration_display formats seconds only when under a minute."""
+        model = AdVideoModel(length=30.0)
+        assert model.duration_display == "30s"
+
+    def test_duration_display_unknown(self) -> None:
+        """duration_display returns Unknown when zero."""
+        model = AdVideoModel()
+        assert model.duration_display == "Unknown"

@@ -47,6 +47,13 @@ EXPECTED: dict[str, object] = {
     "get_audience": READ_ONLY,
     "create_custom_audience": CREATE,
     "create_lookalike_audience": CREATE,
+    # assets.py
+    "upload_ad_image": CREATE,
+    "upload_ad_video": CREATE,
+    "list_ad_images": READ_ONLY,
+    "get_ad_image": READ_ONLY,
+    "list_ad_videos": READ_ONLY,
+    "get_ad_video": READ_ONLY,
 }
 
 
@@ -78,7 +85,7 @@ class TestAllToolsAnnotated:
         assert not stale, f"EXPECTED has entries for non-existent tools: {stale}"
 
     def test_tool_count(self):
-        assert len(_get_tools()) == 30, f"Expected 30 tools, found {len(_get_tools())}"
+        assert len(_get_tools()) == 36, f"Expected 36 tools, found {len(_get_tools())}"
 
 
 # ── Per-tool annotation correctness ───────────────────────────────────────

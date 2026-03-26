@@ -25,10 +25,15 @@ A locally-hosted MCP server wrapping the Meta (Facebook) Ads API for agency/mult
 - Creative create/update tools with dry_run support
 - Advantage+ campaign support, frequency capping, attribution spec
 - Audience creation (custom and lookalike)
-- 35 total MCP tools, 363 tests passing
+- 30 total MCP tools, 363 tests passing
 
-### v4 — Advanced
-- Creative asset upload (image/video)
+### v4 — Asset Upload (Complete)
+- Image upload from local file, returns hash for use in creatives
+- Video upload from local file or URL (Meta fetches directly)
+- Image and video listing and detail views
+- 36 total MCP tools, 506 tests passing
+
+### v5 — Advanced
 - Bulk operations
 - Automated reporting and trend analysis
 
@@ -50,7 +55,8 @@ src/meta_ads_mcp/
     ├── ads.py       # Ad CRUD
     ├── insights.py  # Performance reporting and analytics
     ├── creatives.py # Creative management
-    └── audiences.py # Audience management
+    ├── audiences.py # Audience management
+    └── assets.py    # Image and video asset upload/listing
 ```
 
 ## Tech Stack
@@ -93,7 +99,7 @@ Agency use case requires managing multiple client ad accounts. Every tool accept
 - Instagram-specific APIs (beyond what's exposed through Ads API)
 - SSE transport (stdio only for local hosting)
 
-## Tools (35 across 7 categories)
+## Tools (36 across 8 categories)
 
 ### Accounts (2)
 | Tool | Description |
@@ -152,3 +158,13 @@ Agency use case requires managing multiple client ad accounts. Every tool accept
 | `get_audience` | Get audience details including size and status |
 | `create_custom_audience` | Create website/app/customer file audience |
 | `create_lookalike_audience` | Create lookalike from source audience |
+
+### Assets (6)
+| Tool | Description |
+|---|---|
+| `upload_ad_image` | Upload an image file, returns hash for creatives |
+| `upload_ad_video` | Upload a video from file or URL |
+| `list_ad_images` | List ad images for an account |
+| `get_ad_image` | Get image details by hash |
+| `list_ad_videos` | List ad videos for an account |
+| `get_ad_video` | Get video details by ID |

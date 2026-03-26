@@ -12,7 +12,9 @@ from typing import Any
 from facebook_business.adobjects.ad import Ad
 from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.adcreative import AdCreative
+from facebook_business.adobjects.adimage import AdImage
 from facebook_business.adobjects.adset import AdSet
+from facebook_business.adobjects.advideo import AdVideo
 from facebook_business.adobjects.campaign import Campaign
 from facebook_business.adobjects.customaudience import CustomAudience
 from facebook_business.adobjects.user import User
@@ -1440,3 +1442,244 @@ class MetaAdsClient:
                 raise self._handle_api_error(e) from e
 
         return await asyncio.to_thread(_create)
+
+    # ── Asset (Image/Video) Methods ──────────────────────────────
+
+    _AD_IMAGE_FIELDS = [
+        AdImage.Field.id,
+        AdImage.Field.hash,
+        AdImage.Field.name,
+        AdImage.Field.account_id,
+        AdImage.Field.url,
+        AdImage.Field.url_128,
+        AdImage.Field.width,
+        AdImage.Field.height,
+        AdImage.Field.original_width,
+        AdImage.Field.original_height,
+        AdImage.Field.status,
+        AdImage.Field.permalink_url,
+        AdImage.Field.created_time,
+        AdImage.Field.updated_time,
+    ]
+
+    _AD_VIDEO_FIELDS = [
+        AdVideo.Field.id,
+        AdVideo.Field.name,
+        AdVideo.Field.title,
+        AdVideo.Field.description,
+        AdVideo.Field.length,
+        AdVideo.Field.source,
+        AdVideo.Field.picture,
+        AdVideo.Field.permalink_url,
+        AdVideo.Field.created_time,
+        AdVideo.Field.updated_time,
+    ]
+
+    async def upload_ad_image(
+        self,
+        file_path: str,
+        name: str | None = None,
+        account_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Upload an image to the ad account.
+
+        Args:
+            file_path: Local file path to the image.
+            name: Optional name for the image.
+            account_id: Ad account ID, or None for default.
+
+        Returns:
+            Image data dictionary containing the image hash.
+        """
+        self._ensure_initialized()
+
+        def _upload() -> dict[str, Any]:
+            try:
+                account = self._get_account(account_id)
+                image = AdImage(parent_id=account.get_id())
+                image[AdImage.Field.filename] = file_path
+                if name:
+                    image[AdImage.Field.name] = name
+                image.remote_create()
+                return dict(image)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
+
+        return await asyncio.to_thread(_upload)
+
+    async def upload_ad_video(
+        self,
+        file_path: str | None = None,
+        file_url: str | None = None,
+        name: str | None = None,
+        title: str | None = None,
+        description: str | None = None,
+        account_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Upload a video to the ad account.
+
+        Accepts either a local file path or a URL that Meta will fetch.
+
+        Args:
+            file_path: Local file path to the video.
+            file_url: URL for Meta to fetch the video from.
+            name: Optional name for the video.
+            title: Optional title for the video.
+            description: Optional description for the video.
+            account_id: Ad account ID, or None for default.
+
+        Returns:
+            Video data dictionary containing the video ID.
+        """
+        self._ensure_initialized()
+
+        if not file_path and not file_url:
+            raise MetaAdsError(
+                message="Either file_path or file_url must be provided.",
+            )
+
+        def _upload() -> dict[str, Any]:
+            try:
+                account = self._get_account(account_id)
+                params: dict[str, Any] = {}
+                if name:
+                    params["name"] = name
+                if title:
+                    params["title"] = title
+                if description:
+                    params["description"] = description
+                if file_url:
+                    params["file_url"] = file_url
+                if file_path:
+                    params["filepath"] = file_path
+                result = account.create_ad_video(params=params)
+                return dict(result)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
+
+        return await asyncio.to_thread(_upload)
+
+    async def get_ad_images(
+        self,
+        account_id: str | None = None,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """List ad images for an account.
+
+        Args:
+            account_id: The ad account ID, or None for default.
+            limit: Maximum number of images to return.
+
+        Returns:
+            A list of image data dictionaries.
+        """
+        self._ensure_initialized()
+
+        def _fetch() -> list[dict[str, Any]]:
+            try:
+                account = self._get_account(account_id)
+                images = account.get_ad_images(
+                    fields=self._AD_IMAGE_FIELDS,
+                    params={"limit": limit},
+                )
+                return [dict(img) for img in itertools.islice(images, limit)]
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
+
+        return await asyncio.to_thread(_fetch)
+
+    async def get_ad_image(
+        self,
+        image_hash: str,
+        account_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Get a specific ad image by its hash.
+
+        Args:
+            image_hash: The image hash.
+            account_id: The ad account ID, or None for default.
+
+        Returns:
+            Image data dictionary.
+        """
+        self._ensure_initialized()
+
+        def _fetch() -> dict[str, Any]:
+            try:
+                account = self._get_account(account_id)
+                images = account.get_ad_images(
+                    fields=self._AD_IMAGE_FIELDS,
+                    params={"hashes": [image_hash]},
+                )
+                first = next(iter(images), None)
+                if first is None:
+                    raise MetaAdsError(
+                        message=f"No image found with hash: {image_hash}",
+                    )
+                return dict(first)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
+
+        return await asyncio.to_thread(_fetch)
+
+    async def get_ad_videos(
+        self,
+        account_id: str | None = None,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """List ad videos for an account.
+
+        Args:
+            account_id: The ad account ID, or None for default.
+            limit: Maximum number of videos to return.
+
+        Returns:
+            A list of video data dictionaries.
+        """
+        self._ensure_initialized()
+
+        def _fetch() -> list[dict[str, Any]]:
+            try:
+                account = self._get_account(account_id)
+                videos = account.get_ad_videos(
+                    fields=self._AD_VIDEO_FIELDS,
+                    params={"limit": limit},
+                )
+                return [dict(v) for v in itertools.islice(videos, limit)]
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
+
+        return await asyncio.to_thread(_fetch)
+
+    async def get_ad_video(self, video_id: str) -> dict[str, Any]:
+        """Get detailed info for a specific ad video.
+
+        Args:
+            video_id: The video ID.
+
+        Returns:
+            Video data dictionary.
+        """
+        self._ensure_initialized()
+
+        def _fetch() -> dict[str, Any]:
+            try:
+                video = AdVideo(video_id)
+                video.api_get(fields=self._AD_VIDEO_FIELDS)
+                return dict(video)
+            except FacebookRequestError as e:
+                raise self._handle_api_error(e) from e
+            except (ConnectionError, TimeoutError, OSError) as e:
+                raise MetaAdsError(message=f"Network error: {e}") from e
+
+        return await asyncio.to_thread(_fetch)
