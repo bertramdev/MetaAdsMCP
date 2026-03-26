@@ -17,6 +17,7 @@ from meta_ads_mcp.tools import (
     READ_ONLY,
     get_client,
 )
+from meta_ads_mcp.tools._write_helpers import format_write_error
 
 
 async def upload_ad_image(
@@ -45,10 +46,8 @@ async def upload_ad_image(
         model = AdImageModel(**raw)
         detail = format_ad_image(model)
         return format_write_result("Uploaded", "Ad Image", detail)
-    except (MetaAdsError, ValueError) as e:
-        if isinstance(e, MetaAdsError):
-            return format_error(e.message, error_code=e.error_code, hint=e.hint)
-        return format_error(str(e))
+    except MetaAdsError as e:
+        return format_write_error(e)
 
 
 async def upload_ad_video(
@@ -74,9 +73,6 @@ async def upload_ad_video(
         description: Optional description for the video.
         account_id: The ad account ID (e.g., act_123456789). Optional.
     """
-    if not file_path and not file_url:
-        return format_error("Either file_path or file_url must be provided.")
-
     try:
         client = get_client(ctx)
         raw = await client.upload_ad_video(
@@ -90,10 +86,8 @@ async def upload_ad_video(
         model = AdVideoModel(**raw)
         detail = format_ad_video(model)
         return format_write_result("Uploaded", "Ad Video", detail)
-    except (MetaAdsError, ValueError) as e:
-        if isinstance(e, MetaAdsError):
-            return format_error(e.message, error_code=e.error_code, hint=e.hint)
-        return format_error(str(e))
+    except MetaAdsError as e:
+        return format_write_error(e)
 
 
 async def list_ad_images(

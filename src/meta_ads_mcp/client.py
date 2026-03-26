@@ -1445,6 +1445,36 @@ class MetaAdsClient:
 
     # ── Asset (Image/Video) Methods ──────────────────────────────
 
+    _AD_IMAGE_FIELDS = [
+        AdImage.Field.id,
+        AdImage.Field.hash,
+        AdImage.Field.name,
+        AdImage.Field.account_id,
+        AdImage.Field.url,
+        AdImage.Field.url_128,
+        AdImage.Field.width,
+        AdImage.Field.height,
+        AdImage.Field.original_width,
+        AdImage.Field.original_height,
+        AdImage.Field.status,
+        AdImage.Field.permalink_url,
+        AdImage.Field.created_time,
+        AdImage.Field.updated_time,
+    ]
+
+    _AD_VIDEO_FIELDS = [
+        AdVideo.Field.id,
+        AdVideo.Field.name,
+        AdVideo.Field.title,
+        AdVideo.Field.description,
+        AdVideo.Field.length,
+        AdVideo.Field.source,
+        AdVideo.Field.picture,
+        AdVideo.Field.permalink_url,
+        AdVideo.Field.created_time,
+        AdVideo.Field.updated_time,
+    ]
+
     async def upload_ad_image(
         self,
         file_path: str,
@@ -1462,13 +1492,6 @@ class MetaAdsClient:
             Image data dictionary containing the image hash.
         """
         self._ensure_initialized()
-
-        import os
-
-        if not os.path.isfile(file_path):
-            raise MetaAdsError(
-                message=f"File not found: {file_path}",
-            )
 
         def _upload() -> dict[str, Any]:
             try:
@@ -1517,13 +1540,6 @@ class MetaAdsClient:
                 message="Either file_path or file_url must be provided.",
             )
 
-        import os
-
-        if file_path and not os.path.isfile(file_path):
-            raise MetaAdsError(
-                message=f"File not found: {file_path}",
-            )
-
         def _upload() -> dict[str, Any]:
             try:
                 account = self._get_account(account_id)
@@ -1567,22 +1583,7 @@ class MetaAdsClient:
             try:
                 account = self._get_account(account_id)
                 images = account.get_ad_images(
-                    fields=[
-                        AdImage.Field.id,
-                        AdImage.Field.hash,
-                        AdImage.Field.name,
-                        AdImage.Field.account_id,
-                        AdImage.Field.url,
-                        AdImage.Field.url_128,
-                        AdImage.Field.width,
-                        AdImage.Field.height,
-                        AdImage.Field.original_width,
-                        AdImage.Field.original_height,
-                        AdImage.Field.status,
-                        AdImage.Field.permalink_url,
-                        AdImage.Field.created_time,
-                        AdImage.Field.updated_time,
-                    ],
+                    fields=self._AD_IMAGE_FIELDS,
                     params={"limit": limit},
                 )
                 return [dict(img) for img in itertools.islice(images, limit)]
@@ -1613,30 +1614,15 @@ class MetaAdsClient:
             try:
                 account = self._get_account(account_id)
                 images = account.get_ad_images(
-                    fields=[
-                        AdImage.Field.id,
-                        AdImage.Field.hash,
-                        AdImage.Field.name,
-                        AdImage.Field.account_id,
-                        AdImage.Field.url,
-                        AdImage.Field.url_128,
-                        AdImage.Field.width,
-                        AdImage.Field.height,
-                        AdImage.Field.original_width,
-                        AdImage.Field.original_height,
-                        AdImage.Field.status,
-                        AdImage.Field.permalink_url,
-                        AdImage.Field.created_time,
-                        AdImage.Field.updated_time,
-                    ],
+                    fields=self._AD_IMAGE_FIELDS,
                     params={"hashes": [image_hash]},
                 )
-                results = list(images)
-                if not results:
+                first = next(iter(images), None)
+                if first is None:
                     raise MetaAdsError(
                         message=f"No image found with hash: {image_hash}",
                     )
-                return dict(results[0])
+                return dict(first)
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e
             except (ConnectionError, TimeoutError, OSError) as e:
@@ -1664,18 +1650,7 @@ class MetaAdsClient:
             try:
                 account = self._get_account(account_id)
                 videos = account.get_ad_videos(
-                    fields=[
-                        AdVideo.Field.id,
-                        AdVideo.Field.name,
-                        AdVideo.Field.title,
-                        AdVideo.Field.description,
-                        AdVideo.Field.length,
-                        AdVideo.Field.source,
-                        AdVideo.Field.picture,
-                        AdVideo.Field.permalink_url,
-                        AdVideo.Field.created_time,
-                        AdVideo.Field.updated_time,
-                    ],
+                    fields=self._AD_VIDEO_FIELDS,
                     params={"limit": limit},
                 )
                 return [dict(v) for v in itertools.islice(videos, limit)]
@@ -1700,20 +1675,7 @@ class MetaAdsClient:
         def _fetch() -> dict[str, Any]:
             try:
                 video = AdVideo(video_id)
-                video.api_get(
-                    fields=[
-                        AdVideo.Field.id,
-                        AdVideo.Field.name,
-                        AdVideo.Field.title,
-                        AdVideo.Field.description,
-                        AdVideo.Field.length,
-                        AdVideo.Field.source,
-                        AdVideo.Field.picture,
-                        AdVideo.Field.permalink_url,
-                        AdVideo.Field.created_time,
-                        AdVideo.Field.updated_time,
-                    ]
-                )
+                video.api_get(fields=self._AD_VIDEO_FIELDS)
                 return dict(video)
             except FacebookRequestError as e:
                 raise self._handle_api_error(e) from e

@@ -168,12 +168,15 @@ class TestUploadAdVideo:
         self, mock_context: MagicMock, mock_client: AsyncMock
     ) -> None:
         """Returns error when neither file_path nor file_url provided."""
+        mock_client.upload_ad_video.side_effect = MetaAdsError(
+            "Either file_path or file_url must be provided."
+        )
+
         result = await upload_ad_video(mock_context)
 
         assert "## Error" in result
         assert "file_path" in result
         assert "file_url" in result
-        mock_client.upload_ad_video.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_api_error(

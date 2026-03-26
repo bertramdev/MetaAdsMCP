@@ -97,12 +97,6 @@ class TestUploadAdImage:
         assert "My Banner" in mock_image.values()
 
     @pytest.mark.asyncio
-    async def test_file_not_found(self, client: MetaAdsClient) -> None:
-        """Raises MetaAdsError when file does not exist."""
-        with pytest.raises(MetaAdsError, match="File not found"):
-            await client.upload_ad_image(file_path="/nonexistent/image.jpg")
-
-    @pytest.mark.asyncio
     async def test_api_error(self, client: MetaAdsClient, tmp_path: Any) -> None:
         """Converts SDK error to MetaAdsError."""
         test_file = tmp_path / "test.jpg"
@@ -169,12 +163,6 @@ class TestUploadAdVideo:
         """Raises MetaAdsError when neither file_path nor file_url given."""
         with pytest.raises(MetaAdsError, match="file_path or file_url"):
             await client.upload_ad_video()
-
-    @pytest.mark.asyncio
-    async def test_file_not_found(self, client: MetaAdsClient) -> None:
-        """Raises MetaAdsError when file does not exist."""
-        with pytest.raises(MetaAdsError, match="File not found"):
-            await client.upload_ad_video(file_path="/nonexistent/video.mp4")
 
     @pytest.mark.asyncio
     async def test_api_error(self, client: MetaAdsClient) -> None:
