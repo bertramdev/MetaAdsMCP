@@ -21,11 +21,22 @@ def _make_sdk_error(
     message: str = "Error",
     code: int = 100,
     subcode: int = 0,
+    error_user_msg: str = "",
+    blame_field_specs: list[list[str]] | None = None,
 ) -> Exception:
     """Create a real FacebookRequestError for testing."""
     from facebook_business.exceptions import FacebookRequestError
 
-    body = {"error": {"message": message, "code": code, "error_subcode": subcode}}
+    error_dict: dict[str, Any] = {
+        "message": message,
+        "code": code,
+        "error_subcode": subcode,
+    }
+    if error_user_msg:
+        error_dict["error_user_msg"] = error_user_msg
+    if blame_field_specs is not None:
+        error_dict["error_data"] = {"blame_field_specs": blame_field_specs}
+    body = {"error": error_dict}
     return FacebookRequestError(
         message=message,
         request_context={"method": "GET", "path": "/test"},
@@ -316,6 +327,55 @@ class TestClientMethods:
 
             assert exc_info.value.error_code == 190
             assert exc_info.value.error_subcode == 463
+
+    @pytest.mark.asyncio
+    async def test_api_error_extracts_user_msg_and_blame_fields(
+        self, client: MetaAdsClient
+    ) -> None:
+        """API errors extract error_user_msg and blame_field_specs."""
+        error = _make_sdk_error(
+            message="Invalid parameter",
+            code=100,
+            subcode=1885024,
+            error_user_msg="Ad set requires a daily or lifetime budget.",
+            blame_field_specs=[["daily_budget"], ["lifetime_budget"]],
+        )
+
+        with patch("meta_ads_mcp.client.User") as MockUser:
+            mock_user = MagicMock()
+            mock_user.get_ad_accounts.side_effect = error
+            MockUser.return_value = mock_user
+
+            with pytest.raises(MetaAdsError) as exc_info:
+                await client.get_ad_accounts()
+
+            assert exc_info.value.error_code == 100
+            assert exc_info.value.error_subcode == 1885024
+            assert exc_info.value.error_user_msg == (
+                "Ad set requires a daily or lifetime budget."
+            )
+            assert exc_info.value.blame_field_specs == [
+                "daily_budget",
+                "lifetime_budget",
+            ]
+
+    @pytest.mark.asyncio
+    async def test_api_error_handles_missing_user_msg(
+        self, client: MetaAdsClient
+    ) -> None:
+        """API errors gracefully handle missing error_user_msg."""
+        error = _make_sdk_error(message="Bad param", code=100)
+
+        with patch("meta_ads_mcp.client.User") as MockUser:
+            mock_user = MagicMock()
+            mock_user.get_ad_accounts.side_effect = error
+            MockUser.return_value = mock_user
+
+            with pytest.raises(MetaAdsError) as exc_info:
+                await client.get_ad_accounts()
+
+            assert exc_info.value.error_user_msg == ""
+            assert exc_info.value.blame_field_specs is None
 
     @pytest.mark.asyncio
     async def test_get_creatives_includes_v25_fields(

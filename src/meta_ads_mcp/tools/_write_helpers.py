@@ -141,7 +141,13 @@ def format_write_error(e: Exception) -> str:
         Formatted error markdown string.
     """
     if isinstance(e, MetaAdsError):
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
     return format_error(str(e))
 
 

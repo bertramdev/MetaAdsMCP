@@ -46,7 +46,13 @@ async def list_creatives(
         models = [AdCreativeModel(**d) for d in raw]
         return format_creative_list(models)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 async def get_creative(ctx: Context, creative_id: str) -> str:
@@ -63,7 +69,13 @@ async def get_creative(ctx: Context, creative_id: str) -> str:
         model = AdCreativeModel(**raw)
         return format_creative(model)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 async def create_ad_creative(

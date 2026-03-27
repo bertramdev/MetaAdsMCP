@@ -60,7 +60,13 @@ async def list_ads(
         models = [AdModel(**d) for d in raw]
         return format_ad_list(models)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 async def get_ad(ctx: Context, ad_id: str) -> str:
@@ -78,7 +84,13 @@ async def get_ad(ctx: Context, ad_id: str) -> str:
         model = AdModel(**raw)
         return format_ad(model)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 async def create_ad(
@@ -122,7 +134,13 @@ async def create_ad(
         detail = format_ad(model)
         return format_write_result("Created", "Ad", detail, dry_run=dry_run)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 async def update_ad_status(
@@ -182,7 +200,13 @@ async def get_ad_diagnostics(ctx: Context, ad_id: str) -> str:
         checks = format_delivery_checks(model.failed_delivery_checks)
         return base + "\n\n" + review + "\n\n" + checks
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 def register(mcp: FastMCP) -> None:

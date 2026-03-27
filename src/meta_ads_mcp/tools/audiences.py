@@ -35,7 +35,13 @@ async def list_audiences(
         models = [CustomAudienceModel(**d) for d in raw]
         return format_audience_list(models)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 async def get_audience(ctx: Context, audience_id: str) -> str:
@@ -53,7 +59,13 @@ async def get_audience(ctx: Context, audience_id: str) -> str:
         model = CustomAudienceModel(**raw)
         return format_audience(model)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 async def create_custom_audience(

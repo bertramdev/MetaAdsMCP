@@ -63,7 +63,13 @@ async def list_ad_sets(
         models = [AdSetModel(**d) for d in raw]
         return format_ad_set_list(models)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 async def get_ad_set(ctx: Context, ad_set_id: str) -> str:
@@ -81,7 +87,13 @@ async def get_ad_set(ctx: Context, ad_set_id: str) -> str:
         model = AdSetModel(**raw)
         return format_ad_set(model)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 async def create_ad_set(
@@ -347,7 +359,13 @@ async def get_ad_set_diagnostics(ctx: Context, ad_set_id: str) -> str:
         learning = format_learning_stage(model.learning_stage_info)
         return base + "\n\n" + learning
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 def register(mcp: FastMCP) -> None:

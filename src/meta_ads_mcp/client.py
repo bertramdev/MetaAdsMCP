@@ -6,6 +6,7 @@ synchronous SDK calls without blocking the event loop.
 
 import asyncio
 import itertools
+import json
 import logging
 from typing import Any
 
@@ -47,6 +48,8 @@ class MetaAdsError(Exception):
         message: Human-readable error message.
         error_code: Meta API error code.
         error_subcode: Meta API error subcode.
+        error_user_msg: User-facing error message from Meta API.
+        blame_field_specs: List of field names that caused the error.
     """
 
     def __init__(
@@ -54,15 +57,21 @@ class MetaAdsError(Exception):
         message: str,
         error_code: int | None = None,
         error_subcode: int | None = None,
+        error_user_msg: str = "",
+        blame_field_specs: list[str] | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
         self.error_code = error_code
         self.error_subcode = error_subcode
+        self.error_user_msg = error_user_msg
+        self.blame_field_specs = blame_field_specs
 
     @property
     def hint(self) -> str:
-        """Return an actionable hint for this error code, if available."""
+        """Return an actionable hint, preferring the API's user message."""
+        if self.error_user_msg:
+            return self.error_user_msg
         if self.error_code is None:
             return ""
         return META_ERROR_HINTS.get(self.error_code, "")
@@ -128,10 +137,28 @@ class MetaAdsClient:
         """
         body = error.body() or {}
         err_info = body.get("error", {})
+
+        # Extract blame_field_specs from error_data
+        blame_field_specs: list[str] | None = None
+        error_data = err_info.get("error_data", {})
+        if isinstance(error_data, str):
+            try:
+                error_data = json.loads(error_data)
+            except (ValueError, TypeError):
+                error_data = {}
+        if isinstance(error_data, dict) and error_data.get("blame_field_specs"):
+            raw_specs = error_data["blame_field_specs"]
+            blame_field_specs = [
+                ".".join(spec) if isinstance(spec, list) else str(spec)
+                for spec in raw_specs
+            ]
+
         return MetaAdsError(
             message=err_info.get("message", str(error)),
             error_code=err_info.get("code"),
             error_subcode=err_info.get("error_subcode"),
+            error_user_msg=err_info.get("error_user_msg", ""),
+            blame_field_specs=blame_field_specs,
         )
 
     async def get_ad_accounts(self) -> list[dict[str, Any]]:

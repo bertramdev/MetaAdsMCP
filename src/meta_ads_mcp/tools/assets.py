@@ -109,7 +109,13 @@ async def list_ad_images(
         models = [AdImageModel(**d) for d in raw]
         return format_ad_image_list(models)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 async def get_ad_image(
@@ -131,7 +137,13 @@ async def get_ad_image(
         model = AdImageModel(**raw)
         return format_ad_image(model)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 async def list_ad_videos(
@@ -153,7 +165,13 @@ async def list_ad_videos(
         models = [AdVideoModel(**d) for d in raw]
         return format_ad_video_list(models)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 async def get_ad_video(ctx: Context, video_id: str) -> str:
@@ -170,7 +188,13 @@ async def get_ad_video(ctx: Context, video_id: str) -> str:
         model = AdVideoModel(**raw)
         return format_ad_video(model)
     except MetaAdsError as e:
-        return format_error(e.message, error_code=e.error_code, hint=e.hint)
+        return format_error(
+            e.message,
+            error_code=e.error_code,
+            hint=e.hint,
+            blame_fields=e.blame_field_specs,
+            error_subcode=e.error_subcode,
+        )
 
 
 def register(mcp: FastMCP) -> None:

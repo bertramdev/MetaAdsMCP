@@ -28,7 +28,7 @@ class TestMetaAdsErrorHint:
         assert "Permission denied" in err.hint
 
     def test_known_invalid_param_code(self) -> None:
-        """Error code 100 returns parameter hint."""
+        """Error code 100 without error_user_msg returns generic hint."""
         err = MetaAdsError("Bad param", error_code=100)
         assert "Invalid parameter" in err.hint
 
@@ -52,6 +52,29 @@ class TestMetaAdsErrorHint:
         for code in META_ERROR_HINTS:
             err = MetaAdsError("test", error_code=code)
             assert err.hint, f"No hint for code {code}"
+
+    def test_error_user_msg_takes_priority(self) -> None:
+        """error_user_msg is preferred over generic hint lookup."""
+        err = MetaAdsError(
+            "Invalid parameter",
+            error_code=100,
+            error_user_msg="Ad set requires a daily or lifetime budget.",
+        )
+        assert err.hint == "Ad set requires a daily or lifetime budget."
+
+    def test_error_user_msg_empty_falls_back(self) -> None:
+        """Empty error_user_msg falls back to META_ERROR_HINTS."""
+        err = MetaAdsError("Invalid parameter", error_code=100, error_user_msg="")
+        assert "Invalid parameter" in err.hint
+
+    def test_blame_field_specs_stored(self) -> None:
+        """blame_field_specs are stored on the error."""
+        err = MetaAdsError(
+            "Bad param",
+            error_code=100,
+            blame_field_specs=["daily_budget", "lifetime_budget"],
+        )
+        assert err.blame_field_specs == ["daily_budget", "lifetime_budget"]
 
 
 class TestFormatError:
@@ -81,6 +104,25 @@ class TestFormatError:
         assert "**Error Code**: 17" in result
         assert "**Suggestion**: Wait a few minutes." in result
 
+    def test_with_blame_fields(self) -> None:
+        """Includes blame fields when provided."""
+        result = format_error(
+            "Invalid parameter",
+            error_code=100,
+            blame_fields=["daily_budget", "lifetime_budget"],
+        )
+        assert "**Problem Fields**: daily_budget, lifetime_budget" in result
+
+    def test_with_error_subcode(self) -> None:
+        """Includes subcode when provided."""
+        result = format_error("Bad param", error_code=100, error_subcode=1885024)
+        assert "**Error Code**: 100 (subcode: 1885024)" in result
+
+    def test_no_blame_fields_when_none(self) -> None:
+        """No Problem Fields line when blame_fields is None."""
+        result = format_error("Bad request", error_code=100)
+        assert "Problem Fields" not in result
+
 
 class TestFormatWriteError:
     """Tests for enhanced format_write_error function."""
@@ -106,6 +148,28 @@ class TestFormatWriteError:
         result = format_write_error(err)
         assert "Invalid budget" in result
         assert "Error Code" not in result
+
+    def test_meta_ads_error_with_blame_fields(self) -> None:
+        """MetaAdsError with blame_field_specs renders Problem Fields."""
+        err = MetaAdsError(
+            "Invalid parameter",
+            error_code=100,
+            error_user_msg="Ad set requires a daily or lifetime budget.",
+            blame_field_specs=["daily_budget"],
+        )
+        result = format_write_error(err)
+        assert "**Problem Fields**: daily_budget" in result
+        assert "Ad set requires a daily or lifetime budget." in result
+
+    def test_meta_ads_error_with_subcode(self) -> None:
+        """MetaAdsError with subcode renders in output."""
+        err = MetaAdsError(
+            "Invalid parameter",
+            error_code=100,
+            error_subcode=1885024,
+        )
+        result = format_write_error(err)
+        assert "(subcode: 1885024)" in result
 
 
 class TestNetworkErrorHandling:

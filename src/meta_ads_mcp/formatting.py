@@ -750,6 +750,8 @@ def format_error(
     message: str,
     error_code: int | None = None,
     hint: str = "",
+    blame_fields: list[str] | None = None,
+    error_subcode: int | None = None,
 ) -> str:
     """Format an error message as markdown.
 
@@ -757,13 +759,20 @@ def format_error(
         message: The error message.
         error_code: Optional Meta API error code.
         hint: Optional actionable suggestion.
+        blame_fields: Optional list of field names that caused the error.
+        error_subcode: Optional Meta API error subcode.
 
     Returns:
         Formatted markdown error string.
     """
     lines = [f"## Error\n\n{message}"]
     if error_code is not None:
-        lines.append(f"\n**Error Code**: {error_code}")
+        code_str = f"\n**Error Code**: {error_code}"
+        if error_subcode is not None:
+            code_str += f" (subcode: {error_subcode})"
+        lines.append(code_str)
+    if blame_fields:
+        lines.append(f"\n**Problem Fields**: {', '.join(blame_fields)}")
     if hint:
         lines.append(f"\n**Suggestion**: {hint}")
     return "".join(lines)
